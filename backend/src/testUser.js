@@ -2,6 +2,7 @@
 // \l litser les databases
 // \! clear | cls pour clear
 // \c permet de se connecter à database
+// \q se deconnecter d'une base de donnée
 const sequelize = require('./db');
 const User = require('./models/User');
 
