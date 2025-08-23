@@ -66,7 +66,7 @@ async function fullTest() {
     console.log('Full test insertion OK');
     process.exit();
   } catch (error) {
-    console.error('Erreur fullTest :', error);
+    console.error('Error fullTest :', error);
     process.exit(1);
   }
 }
