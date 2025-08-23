@@ -15,7 +15,7 @@ const Category = sequelize.define('Category', {
     type: DataTypes.STRING
   },
   type: {
-    type: DataTypes.ENUM('income', 'receipt'),
+    type: DataTypes.ENUM('income', 'expense'),
     allowNull: false
   }
 }, {

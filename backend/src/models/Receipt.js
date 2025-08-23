@@ -24,7 +24,7 @@ const Receipt = sequelize.define('Receipt', {
   },
   categoryId: {             // Clé étrangère vers Category
     type: DataTypes.INTEGER,
-    allowNull: true,
+    allowNull: false,
   }
 }, {
   tableName: 'Receipts',

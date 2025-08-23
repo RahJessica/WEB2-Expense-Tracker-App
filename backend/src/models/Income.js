@@ -24,7 +24,7 @@ const Income = sequelize.define('Income', {
   },
   categoryId: {             
     type: DataTypes.INTEGER,
-    allowNull: true,
+    allowNull: false,
   }
 }, {
   tableName: 'Incomes',

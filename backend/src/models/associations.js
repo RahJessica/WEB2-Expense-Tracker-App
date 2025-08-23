@@ -5,12 +5,10 @@ const Receipt = require('./Receipt');
 
 
 User.hasMany(Income, {
-  foreignKey: 'userId',     
-  onDelete: 'CASCADE',       
+  foreignKey: 'userId',
+  onDelete: 'CASCADE', 
 });
-Income.belongsTo(User, {
-  foreignKey: 'userId'
-});
+Income.belongsTo(User, { foreignKey: 'userId' });
 
 
 User.hasMany(Receipt, {
@@ -18,28 +16,22 @@ User.hasMany(Receipt, {
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE'
 });
-Receipt.belongsTo(User, {
-  foreignKey: 'userId'
-});
+Receipt.belongsTo(User, { foreignKey: 'userId' });
 
 
 Category.hasMany(Income, {
   foreignKey: 'categoryId',
-  onDelete: 'SET NULL',     
+  onDelete: 'SET NULL',  
   onUpdate: 'CASCADE'
 });
-Income.belongsTo(Category, {
-  foreignKey: 'categoryId'
-});
+Income.belongsTo(Category, { foreignKey: 'categoryId' });
 
 
 Category.hasMany(Receipt, {
   foreignKey: 'categoryId',
-  onDelete: 'SET NULL',
+  onDelete: 'SET NULL',  
   onUpdate: 'CASCADE'
 });
-Receipt.belongsTo(Category, {
-  foreignKey: 'categoryId'
-});
+Receipt.belongsTo(Category, { foreignKey: 'categoryId' });
 
 module.exports = { User, Category, Income, Receipt };

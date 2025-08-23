@@ -13,7 +13,7 @@ const sequelize = new Sequelize(
 
   async function testConnection() {
     try {
-      await sequelize.authenticate(); // teste la connexion
+      await sequelize.authenticate();
       console.log('Connexion à PostgreSQL OK ');
     } catch (err) {
       console.error('Erreur connexion PostgreSQL :', err);
