@@ -7,8 +7,13 @@ const PORT = process.env.PORT || 8080;
 
 app.use(express.json());
 
+// Implémentation des routes :
+const incomeRoutes = require('./routes/income.js');
+app.use('/incomes', incomeRoutes);
+
 const authRoutes = require('./routes/auth.js');
 app.use('/auth', authRoutes);
+
 
 async function startServer() {
     try {
