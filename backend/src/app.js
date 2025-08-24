@@ -1,11 +1,29 @@
-const express = require('express');
-const app = express(); // création du server express
+const express=require("express")
+const {sequelize}=require("./models")
 require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 8080;
 
 app.use(express.json());
 
 const authRoutes = require('./routes/auth.js');
 app.use('/auth', authRoutes);
 
-// Démarrage du server express, run
-app.listen(8080, () => console.log('Server running on http://localhost:8080'));
+async function startServer() {
+    try {
+        await sequelize.authenticate();
+        console.log("Connexion à la base de donnée réussie");
+
+        await sequelize.sync({alter:true});
+        console.log("Base de données synchronisée");
+
+        app.listen(PORT, () => {
+        console.log(` Serveur lancé sur http://localhost:${PORT}`);
+        });
+    } catch (err) {
+        console.log("Erreur au lancement du serveur", err)
+    }
+}
+
+startServer();
