@@ -4,7 +4,7 @@ require('dotenv').config();
 
 app.use(express.json());
 
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./routes/auth.js');
 app.use('/auth', authRoutes);
 
 // Démarrage du server express, run
