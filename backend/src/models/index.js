@@ -1,8 +1,8 @@
-const User = require('./User');
-const Category = require('./Category');
-const Income = require('./Income');
-const Receipt = require('./Receipt');
-
+const sequelize=require("../db")
+const User=require("./User")
+const Income=require("./Income")
+const Category=require("./Category")
+const Receipt=require("./Receipt")
 
 User.hasMany(Income, {
   foreignKey: 'userId',
@@ -34,4 +34,10 @@ Category.hasMany(Receipt, {
 });
 Receipt.belongsTo(Category, { foreignKey: 'categoryId' });
 
-module.exports = { User, Category, Income, Receipt };
+module.exports={
+    sequelize,
+    User,
+    Income,
+    Receipt,
+    Category
+}
