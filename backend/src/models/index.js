@@ -1,6 +1,6 @@
 const sequelize=require("../db")
 const User=require("./User")
-const Income=require("./Income")
+const Income=require("./Incomes")
 const Category=require("./Category")
 const Receipt=require("./Receipt")
 
