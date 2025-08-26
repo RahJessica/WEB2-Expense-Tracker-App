@@ -19,7 +19,11 @@ exports.createIncome = async (req, res) => {
 
 exports.getIncomes = async (req, res) => {
   try {
-    const incomes = await Income.findAll({ where: { userId: req.user.id } });
+    const incomes = await Income.findAll({
+      where: { userId: req.user.id },
+      attributes: ['id', 'amount', 'description', 'date'], 
+      order: [['date', 'DESC']]
+    });
     res.json(incomes);
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -14,6 +14,11 @@ app.use('/incomes', incomeRoutes);
 const authRoutes = require('./routes/auth.js');
 app.use('/auth', authRoutes);
 
+app.use('/categories', require('./routes/categories.js'));
+
+const dashboardRoutes = require('./routes/dashboard.js');
+app.use('/dashboard', dashboardRoutes);
+
 
 async function startServer() {
     try {
