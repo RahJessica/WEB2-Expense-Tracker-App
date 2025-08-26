@@ -5,7 +5,7 @@ const { authenticate } = require('../middlewares/authentification.js');
 
 router.use(authenticate);
 
-router.post('/', createIncome);
+router.post('/new', createIncome);
 router.get('/', getIncomes);
 
 module.exports = router;
