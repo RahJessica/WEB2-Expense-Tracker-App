@@ -7,5 +7,6 @@ router.use(authenticate);
 
 router.post('/new', createIncome);
 router.get('/', getIncomes);
+router.delete('/:id', deleteIncome);
 
 module.exports = router;

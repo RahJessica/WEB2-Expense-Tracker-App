@@ -29,3 +29,20 @@ exports.getIncomes = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.deleteIncome = async (req, res) => {
+  try {
+    const incomeId = req.params.id;
+    const income = await Income.findByPk(incomeId);
+    if (!income) return res.status(404).json({ error: 'Income not found' });
+
+    if (income.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden: not your income' });
+    }
+
+    await income.destroy();
+    res.status(204).send(); 
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
