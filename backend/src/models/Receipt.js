@@ -7,28 +7,26 @@ const Receipt = sequelize.define('Receipt', {
     autoIncrement: true,
     primaryKey: true,
   },
-  amount: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
-  },
-  description: {
+  fileURL: {
     type: DataTypes.STRING,
-  },
-  date: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
-  userId: {                 // Clé étrangère vers User
-    type: DataTypes.INTEGER,
     allowNull: false,
   },
-  categoryId: {             // Clé étrangère vers Category
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  }
-}, {
-  tableName: 'Receipts',
-  timestamps: true,
-});
+  size: {
+    type: DataTypes.INTEGER, 
+    allowNull: false, 
+    validate: {
+      max: 5 * 1024 * 1024,   //5Mb
+    }
+  },
+  expenseId: {
+  type: DataTypes.INTEGER,
+  allowNull: false,
+},
+userId: {
+  type: DataTypes.INTEGER,
+  allowNull: false,
+}
+
+})
 
 module.exports = Receipt;

@@ -20,7 +20,7 @@ const Expense = sequelize.define('Expense',{
         defaultValue: "one-time", 
     },
     date: {
-        type: DataTypes.DATEONLY,
+        type: DataTypes.DATE,
         allowNull: true,
     },
     startDate: {
@@ -31,20 +31,17 @@ const Expense = sequelize.define('Expense',{
         type: DataTypes.DATEONLY,
         allowNull: true,
     },
-    createAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-    }, 
-    updateAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
-    },
-
+    userId: {                 
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  categoryId: {             
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  }
 }, {
   tableName: 'expenses',
-
+  timestamps: true,
   validate: {
     validateDates() {
       if (this.type === 'one-time') {

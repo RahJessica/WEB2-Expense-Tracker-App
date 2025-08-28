@@ -11,6 +11,10 @@ const Income = sequelize.define('Income', {
     type: DataTypes.FLOAT,
     allowNull: false,
   },
+  source: {
+    type: DataTypes.STRING,
+    allowNull:false,
+  },
   description: {
     type: DataTypes.STRING,
   },
