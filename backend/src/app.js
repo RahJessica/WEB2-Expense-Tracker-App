@@ -1,10 +1,24 @@
 const express=require("express")
 const {sequelize}=require("./models")
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 app.use(express.json());
+
+// Implémentation des routes :
+const incomeRoutes = require('./routes/income.js');
+app.use('/incomes', incomeRoutes);
+
+const authRoutes = require('./routes/auth.js');
+app.use('/auth', authRoutes);
+
+app.use('/categories', require('./routes/categories.js'));
+
+const dashboardRoutes = require('./routes/dashboard.js');
+app.use('/dashboard', dashboardRoutes);
+
 
 async function startServer() {
     try {
