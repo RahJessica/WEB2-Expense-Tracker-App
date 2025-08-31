@@ -26,3 +26,18 @@ exports.login = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.me = async (req, res) => {
+  try {
+    // req.user est rempli par le middleware authenticate
+    if (!req.user) return res.status(401).json({ message: "Not authenticated" });
+
+    res.json({
+      id: req.user.id,
+      username: req.user.username,
+      email: req.user.email
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
