@@ -9,16 +9,20 @@ app.use(express.json());
 
 // Implémentation des routes :
 const incomeRoutes = require('./routes/income.js');
-app.use('/incomes', incomeRoutes);
-
 const authRoutes = require('./routes/auth.js');
-app.use('/auth', authRoutes);
-
-app.use('/categories', require('./routes/categories.js'));
-
 const dashboardRoutes = require('./routes/dashboard.js');
-app.use('/dashboard', dashboardRoutes);
+const expenseRoutes = require('./routes/expense.js');
+const categoryRoutes = require('./routes/category.js');
+const receiptRoutes = require('./routes/receipt.js');
+const userRoutes = require('./routes/users.js');
 
+app.use('/dashboard', dashboardRoutes);
+app.use('/categories', categoryRoutes);
+app.use('/auth', authRoutes);
+app.use('/incomes', incomeRoutes);
+app.use('/expense', expenseRoutes);
+app.use('/receipt', receiptRoutes);
+app.use('/users', userRoutes);
 
 async function startServer() {
     try {
