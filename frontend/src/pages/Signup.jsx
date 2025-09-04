@@ -69,8 +69,7 @@ export default function Signup() {
             </p>
           </div>
           <div className="mt-6">
-            <div className="w-48 h-48 bg-gray-700 rounded-lg flex items-center justify-center">
-            </div>
+            <img src="../../src/assets/signupIllustration.jpg" alt="" className="w-[20vw] h-[40vh] rounded-2xl"/>
           </div>
         </div>
       </div>
