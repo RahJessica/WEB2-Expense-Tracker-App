@@ -6,8 +6,6 @@ export default function Dashboard() {
   const [expenses, setExpenses] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Ajout de date
   const [newExpense, setNewExpense] = useState({ amount: "", type: "one-time", date: "" });
   const [newIncome, setNewIncome] = useState({ amount: "", description: "", date: "" });
 

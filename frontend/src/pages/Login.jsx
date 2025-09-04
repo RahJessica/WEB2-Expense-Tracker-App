@@ -26,30 +26,38 @@ export default function Login() {
   };
 
   return (
-    <Fragment>
-        <h1 className="text-3xl font-bold text-center mt-3">Connectez-vous ici !</h1>
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-3 max-w-sm mx-auto mt-10"
-    >
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        value={form.email}
-        onChange={handleChange}
-        className="border p-2 rounded"
-      />
-      <input
-        type="password"
-        name="password"
-        placeholder="Mot de passe"
-        value={form.password}
-        onChange={handleChange}
-        className="border p-2 rounded"
-      />
-      <button className="bg-blue-500 text-white p-2 rounded">Se connecter</button>
-    </form>
-    </Fragment>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md">
+        <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">Welcome Back!</h1>
+        <p className="text-center text-gray-500 mb-6">Please enter log in details below</p>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Mot de passe"
+            value={form.password}
+            onChange={handleChange}
+            className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            className="bg-black text-white p-3 rounded-lg hover:bg-gray-800 transition duration-200"
+          >
+            Sign in
+          </button>
+          <p className="text-center text-gray-500 text-sm mt-4">
+            Don’t have an account? <a href="/auth/signup" className="text-blue-500 hover:underline">Sign Up</a>
+          </p>
+        </form>
+      </div>
+    </div>
   );
 }
