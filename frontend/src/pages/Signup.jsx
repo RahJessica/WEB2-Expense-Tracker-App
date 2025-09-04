@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 
@@ -23,6 +23,9 @@ export default function Signup() {
   };
 
   return (
+    <>
+    <div className="flex flex-col h-full items-center">
+    <h1 className="text-3xl font-bold text-center mt-3">Inscrivez-vous !</h1>
     <form onSubmit={handleSubmit} className="flex flex-col gap-3 max-w-sm mx-auto mt-10">
       <input
         name="username"
@@ -48,5 +51,7 @@ export default function Signup() {
       />
       <button className="bg-green-500 text-white p-2 rounded">S’inscrire</button>
     </form>
+    </div>
+    </>
   );
 }

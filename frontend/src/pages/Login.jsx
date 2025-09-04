@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 
@@ -26,6 +26,8 @@ export default function Login() {
   };
 
   return (
+    <Fragment>
+        <h1 className="text-3xl font-bold text-center mt-3">Connectez-vous ici !</h1>
     <form
       onSubmit={handleSubmit}
       className="flex flex-col gap-3 max-w-sm mx-auto mt-10"
@@ -48,5 +50,6 @@ export default function Login() {
       />
       <button className="bg-blue-500 text-white p-2 rounded">Se connecter</button>
     </form>
+    </Fragment>
   );
 }
