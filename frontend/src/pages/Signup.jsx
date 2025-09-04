@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
     const [form, setForm] = useState({ username: "", email: "", password: "" });
-    const [popup, setPopup] = useState({ message: "", type: "" }); // type = "success" | "error"
+    const [popup, setPopup] = useState({ message: "", type: "" }); 
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -76,6 +76,7 @@ export default function Signup() {
                         </button>
                     </form>
                 </div>
+
                 <div className="w-1/2 bg-gray-900 text-white p-10 flex flex-col justify-center items-center">
                     <div className="text-center">
                         <h2 className="text-2xl font-bold mb-4">Manage your Money Anywhere</h2>
@@ -86,10 +87,16 @@ export default function Signup() {
                     <div className="mt-6">
                         <img
                             src="../../src/assets/signupIllustration.jpg"
-                            alt=""
+                            alt="Signup illustration"
                             className="w-[20vw] h-[40vh] rounded-2xl"
                         />
                     </div>
+                    <button
+                        onClick={() => navigate("/auth/login")}
+                        className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200"
+                    >
+                        Already have an account? Sign in
+                    </button>
                 </div>
             </div>
         </div>

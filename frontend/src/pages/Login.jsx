@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState(""); // <-- état pour afficher le popup
+  const [error, setError] = useState(""); // état pour afficher le popup
   const navigate = useNavigate();
 
   const handleChange = (e) => {
