@@ -9,6 +9,8 @@ export default function Dashboard() {
   const [newExpense, setNewExpense] = useState({ amount: "", type: "one-time", date: "" });
   const [newIncome, setNewIncome] = useState({ amount: "", description: "", date: "" });
 
+  const [editItem, setEditItem] = useState(null); 
+  const [popup, setPopup] = useState({ message: "", type: "" }); 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -26,19 +28,24 @@ export default function Dashboard() {
       setExpenses(expensesRes.data);
       setIncomes(incomesRes.data);
     } catch (err) {
-      console.error(err);
+      showPopup("Error fetching data", "error");
     }
     setLoading(false);
   };
 
-  // --- Expenses CRUD ---
+  const showPopup = (message, type = "success") => {
+    setPopup({ message, type });
+    setTimeout(() => setPopup({ message: "", type: "" }), 3000);
+  };
+
   const handleAddExpense = async () => {
     try {
       await api.post("/expense/new", newExpense, { headers });
       setNewExpense({ amount: "", type: "one-time", date: "" });
       fetchData();
+      showPopup("Expense added successfully!", "success");
     } catch (err) {
-      alert(err.response?.data?.error || "Error adding expense");
+      showPopup(err.response?.data?.error || "Error adding expense", "error");
     }
   };
 
@@ -47,30 +54,20 @@ export default function Dashboard() {
     try {
       await api.delete(`/expense/delete/${id}`, { headers });
       fetchData();
+      showPopup("Expense deleted successfully!", "success");
     } catch (err) {
-      alert(err.response?.data?.error || "Error deleting expense");
+      showPopup(err.response?.data?.error || "Error deleting expense", "error");
     }
   };
 
-  const handleUpdateExpense = async (id) => {
-    const amount = prompt("Enter new amount:");
-    if (!amount) return;
-    try {
-      await api.put(`/expense/edit/${id}`, { amount }, { headers });
-      fetchData();
-    } catch (err) {
-      alert(err.response?.data?.error || "Error updating expense");
-    }
-  };
-
-  // --- Incomes CRUD ---
   const handleAddIncome = async () => {
     try {
       await api.post("/incomes/new", newIncome, { headers });
       setNewIncome({ amount: "", description: "", date: "" });
       fetchData();
+      showPopup("Income added successfully!", "success");
     } catch (err) {
-      alert(err.response?.data?.error || "Error adding income");
+      showPopup(err.response?.data?.error || "Error adding income", "error");
     }
   };
 
@@ -79,29 +76,43 @@ export default function Dashboard() {
     try {
       await api.delete(`/incomes/delete/${id}`, { headers });
       fetchData();
+      showPopup("Income deleted successfully!", "success");
     } catch (err) {
-      alert(err.response?.data?.error || "Error deleting income");
+      showPopup(err.response?.data?.error || "Error deleting income", "error");
     }
   };
 
-  const handleUpdateIncome = async (id) => {
-    const amount = prompt("Enter new amount:");
-    if (!amount) return;
+  const handleEditClick = (item, type) => {
+    setEditItem({ type, data: item });
+  };
+
+  const handleEditSubmit = async (updatedData) => {
     try {
-      await api.put(`/incomes/${id}`, { amount }, { headers });
+      if (editItem.type === "expense") {
+        await api.put(`/expense/edit/${editItem.data.id}`, updatedData, { headers });
+      } else {
+        await api.put(`/incomes/${editItem.data.id}`, updatedData, { headers });
+      }
+      setEditItem(null);
       fetchData();
+      showPopup(`${editItem.type === "expense" ? "Expense" : "Income"} updated successfully!`, "success");
     } catch (err) {
-      alert(err.response?.data?.error || "Error updating income");
+      showPopup(err.response?.data?.error || "Error updating item", "error");
     }
   };
 
   if (loading) return <p>Loading...</p>;
 
   return (
-    <div className="max-w-5xl mx-auto mt-10">
+    <div className="max-w-5xl mx-auto mt-10 relative">
+      {popup.message && (
+        <div className={`fixed top-5 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white ${popup.type === "success" ? "bg-green-500" : "bg-red-500"}`}>
+          {popup.message}
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold mb-5">Dashboard</h1>
 
-      {/* Summary */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="p-4 border rounded bg-green-100">
           <h2>Total Income</h2>
@@ -117,88 +128,68 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Add Expense */}
       <div className="mb-6">
         <h2 className="font-bold mb-2">Add Expense</h2>
-        <input
-          type="number"
-          placeholder="Amount"
-          value={newExpense.amount}
-          onChange={e => setNewExpense({ ...newExpense, amount: e.target.value })}
-          className="border p-2 rounded mr-2"
-        />
-        <select
-          value={newExpense.type}
-          onChange={e => setNewExpense({ ...newExpense, type: e.target.value })}
-          className="border p-2 rounded mr-2"
-        >
+        <input type="number" placeholder="Amount" value={newExpense.amount} onChange={e => setNewExpense({ ...newExpense, amount: e.target.value })} className="border p-2 rounded mr-2"/>
+        <select value={newExpense.type} onChange={e => setNewExpense({ ...newExpense, type: e.target.value })} className="border p-2 rounded mr-2">
           <option value="one-time">One-time</option>
           <option value="recurring">Recurring</option>
         </select>
-        <input
-          type="date"
-          value={newExpense.date}
-          onChange={e => setNewExpense({ ...newExpense, date: e.target.value })}
-          className="border p-2 rounded mr-2"
-        />
-        <button onClick={handleAddExpense} className="bg-red-500 text-white p-2 rounded">
-          Add Expense
-        </button>
+        <input type="date" value={newExpense.date} onChange={e => setNewExpense({ ...newExpense, date: e.target.value })} className="border p-2 rounded mr-2"/>
+        <button onClick={handleAddExpense} className="bg-red-500 text-white p-2 rounded">Add Expense</button>
       </div>
 
-      {/* Expenses List */}
       <ul className="mb-8">
         {expenses.map(e => (
           <li key={e.id} className="flex justify-between p-2 border-b">
             <span>${e.amount} - {e.type} {e.date ? `(${e.date})` : ""}</span>
             <div>
-              <button onClick={() => handleUpdateExpense(e.id)} className="text-yellow-600 mr-2">Edit</button>
+              <button onClick={() => handleEditClick(e, "expense")} className="text-yellow-600 mr-2">Edit</button>
               <button onClick={() => handleDeleteExpense(e.id)} className="text-red-600">Delete</button>
             </div>
           </li>
         ))}
       </ul>
 
-      {/* Add Income */}
       <div className="mb-6">
         <h2 className="font-bold mb-2">Add Income</h2>
-        <input
-          type="number"
-          placeholder="Amount"
-          value={newIncome.amount}
-          onChange={e => setNewIncome({ ...newIncome, amount: e.target.value })}
-          className="border p-2 rounded mr-2"
-        />
-        <input
-          type="text"
-          placeholder="Description"
-          value={newIncome.description}
-          onChange={e => setNewIncome({ ...newIncome, description: e.target.value })}
-          className="border p-2 rounded mr-2"
-        />
-        <input
-          type="date"
-          value={newIncome.date}
-          onChange={e => setNewIncome({ ...newIncome, date: e.target.value })}
-          className="border p-2 rounded mr-2"
-        />
-        <button onClick={handleAddIncome} className="bg-green-500 text-white p-2 rounded">
-          Add Income
-        </button>
+        <input type="number" placeholder="Amount" value={newIncome.amount} onChange={e => setNewIncome({ ...newIncome, amount: e.target.value })} className="border p-2 rounded mr-2"/>
+        <input type="text" placeholder="Description" value={newIncome.description} onChange={e => setNewIncome({ ...newIncome, description: e.target.value })} className="border p-2 rounded mr-2"/>
+        <input type="date" value={newIncome.date} onChange={e => setNewIncome({ ...newIncome, date: e.target.value })} className="border p-2 rounded mr-2"/>
+        <button onClick={handleAddIncome} className="bg-green-500 text-white p-2 rounded">Add Income</button>
       </div>
 
-      {/* Incomes List */}
       <ul className="mb-8">
         {incomes.map(i => (
           <li key={i.id} className="flex justify-between p-2 border-b">
             <span>${i.amount} - {i.description} {i.date ? `(${i.date})` : ""}</span>
             <div>
-              <button onClick={() => handleUpdateIncome(i.id)} className="text-yellow-600 mr-2">Edit</button>
+              <button onClick={() => handleEditClick(i, "income")} className="text-yellow-600 mr-2">Edit</button>
               <button onClick={() => handleDeleteIncome(i.id)} className="text-red-600">Delete</button>
             </div>
           </li>
         ))}
       </ul>
+
+      {editItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-80">
+            <h2 className="text-lg font-bold mb-4">Edit {editItem.type}</h2>
+            <input type="number" value={editItem.data.amount} onChange={e => setEditItem({...editItem, data: {...editItem.data, amount: e.target.value}})} className="border p-2 rounded w-full mb-4"/>
+            {editItem.type === "expense" && (
+              <input type="date" value={editItem.data.date} onChange={e => setEditItem({...editItem, data: {...editItem.data, date: e.target.value}})} className="border p-2 rounded w-full mb-4"/>
+            )}
+            {editItem.type === "income" && (
+              <input type="text" value={editItem.data.description} onChange={e => setEditItem({...editItem, data: {...editItem.data, description: e.target.value}})} className="border p-2 rounded w-full mb-4"/>
+            )}
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setEditItem(null)} className="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+              <button onClick={() => handleEditSubmit(editItem.data)} className="bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
