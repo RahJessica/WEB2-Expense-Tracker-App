@@ -4,8 +4,12 @@ import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
-  // App.jsx ou un AuthProvider.js
 
+  const logout = () => {
+  localStorage.removeItem('token'); 
+  setUser(null);                    
+  navigate('/login');         
+};
 
 
     return (
