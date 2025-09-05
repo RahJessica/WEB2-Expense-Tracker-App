@@ -5,12 +5,6 @@ import './App.css'
 
 function App() {
 
-  const logout = () => {
-  localStorage.removeItem('token'); 
-  setUser(null);                    
-  navigate('/login');         
-};
-
 
     return (
     <>
