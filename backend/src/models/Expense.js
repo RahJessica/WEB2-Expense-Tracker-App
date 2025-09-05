@@ -22,10 +22,7 @@ const Expense = sequelize.define('Expense',{
     date: {
         type: DataTypes.DATE,
         allowNull: true,
-    },
-    startDate: {
-        type: DataTypes.DATEONLY,
-        allowNull: true,
+        defaultValue: DataTypes.NOW, 
     },
     endDate: {
         type: DataTypes.DATEONLY,
@@ -44,28 +41,17 @@ const Expense = sequelize.define('Expense',{
   timestamps: true,
   validate: {
     validateDates() {
-      if (this.type === 'one-time') {
-        if (!this.date) {
-          throw new Error('One-time expenses must have a date.');
-        }
-        if (this.startDate || this.endDate) {
-          throw new Error('One-time expenses cannot have startDate or endDate.');
-        }
+      if (this.type === 'one-time' && this.endDate) {
+        throw new Error('One-time expenses cannot have an endDate.');
       }
-
       if (this.type === 'recurring') {
-        if (!this.startDate) {
-          throw new Error('Recurring expenses must have a startDate.');
-        }
-        if (this.date) {
-          throw new Error('Recurring expenses cannot have a one-time date.');
-        }
-        if (this.endDate && new Date(this.endDate) < new Date(this.startDate)) {
-          throw new Error('End date cannot be before start date.');
+        if (this.endDate && new Date(this.endDate) < new Date(this.date)) {
+        throw new Error('End date cannot be before the start date.');
         }
       }
     }
-  }
+  },
+ 
 });
 
 module.exports = Expense;
