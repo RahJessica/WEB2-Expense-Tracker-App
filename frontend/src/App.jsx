@@ -4,9 +4,11 @@ import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  // App.jsx ou un AuthProvider.js
 
-  return (
+
+
+    return (
     <>
       <div>
         Let's code !!!
