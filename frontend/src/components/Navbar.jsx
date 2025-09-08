@@ -17,7 +17,7 @@ const Navbar = () => {
       
       {/* Logo */}
       <div className="p-6 text-2xl font-bold text-gray-800 hover:text-green-600 transition-colors cursor-pointer">
-        TrackHack
+        Expense Tracker
       </div>
 
       {/* Navigation Links */}
