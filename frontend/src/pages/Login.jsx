@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
 
@@ -6,6 +6,13 @@ export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState(""); 
   const navigate = useNavigate();
+
+  // Si déjà connecté, redirection vers le dashboard
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -16,7 +23,7 @@ export default function Login() {
     try {
       const res = await api.post("/auth/login", form);
       localStorage.setItem("token", res.data.token);
-      navigate("/dashboard");
+      navigate("/dashboard"); // redirection après login
     } catch (err) {
       setError(err.response?.data?.message || "Invalid credentials");
       setTimeout(() => setError(""), 3000);
@@ -25,7 +32,6 @@ export default function Login() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      {/* Popup d'erreur */}
       {error && (
         <div className="fixed top-5 bg-red-500 text-white px-6 py-3 rounded-lg shadow-md animate-fadeIn">
           {error}
