@@ -15,7 +15,7 @@ const Navbar = () => {
   return (
     <nav className="bg-white flex flex-row content-between px-2.5 py-1.5 shadow-gray-200 shadow-xl ">
       <div>
-        <p className="text-black text-2xl">TrackHack</p> 
+        <p className="text-black text-2xl">Yola</p> 
       </div>
       <div className="flex flex-row gap-6 text-lg  ">
         <Link to="/dashboard">Dashboard</Link>
