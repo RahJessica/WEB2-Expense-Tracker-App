@@ -24,8 +24,8 @@ export default function Dashboard() {
     try {
       const [summaryRes, expensesRes, incomesRes] = await Promise.all([
         api.get("/dashboard", { headers }),
-        api.get("/expense", { headers }),
-        api.get("/incomes", { headers }),
+        api.get("/expense/expenses", { headers }),   // ✅ route corrigée
+        api.get("/income/incomes", { headers }),     // ✅ route corrigée
       ]);
       setSummary(summaryRes.data);
       setExpenses(expensesRes.data);
@@ -79,7 +79,7 @@ export default function Dashboard() {
   // --- Incomes CRUD ---
   const handleAddIncome = async () => {
     try {
-      await api.post("/incomes/new", newIncome, { headers });
+      await api.post("/income/new", newIncome, { headers });
       setNewIncome({ amount: "", description: "", date: "" });
       fetchData();
       showPopup("Income added", "success");
@@ -90,7 +90,7 @@ export default function Dashboard() {
 
   const handleUpdateIncome = async () => {
     try {
-      await api.put(`/incomes/${editingIncome.id}`, editingIncome, { headers });
+      await api.put(`/income/${editingIncome.id}`, editingIncome, { headers });
       setEditingIncome(null);
       fetchData();
       showPopup("Income updated", "success");
@@ -102,7 +102,7 @@ export default function Dashboard() {
   const handleDeleteIncome = async (id) => {
     if (!confirm("Delete this income?")) return;
     try {
-      await api.delete(`/incomes/delete/${id}`, { headers });
+      await api.delete(`/income/delete/${id}`, { headers });
       fetchData();
       showPopup("Income deleted", "success");
     } catch (err) {
