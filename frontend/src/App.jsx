@@ -9,48 +9,62 @@ import IncomeList from "./pages/IncomeList.jsx";
 import UserProfile from "./pages/UserProfile.jsx";
 
 function App() {
-  const isLoggedIn = !!localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
   return (
     <BrowserRouter>
-      {isLoggedIn && <Navbar />}
-      
       <Routes>
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/signup" element={<Signup />} />
-        
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route 
-          path="/expenses" 
-          element={
-            <ProtectedRoute>
-              <ExpenseList/>
-            </ProtectedRoute>
-          }
-        />
-        <Route 
-          path="/incomes" 
-          element={
-            <ProtectedRoute>
-              <IncomeList/>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/profile" 
-          element={
-            <ProtectedRoute>
-              <UserProfile/>
-            </ProtectedRoute>
-          } 
-        />
+
+        {token && (
+          <>
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <div className="flex">
+                    <Navbar />
+                    <Dashboard />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/expenses"
+              element={
+                <ProtectedRoute>
+                  <div className="flex">
+                    <Navbar />
+                    <ExpenseList />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/incomes"
+              element={
+                <ProtectedRoute>
+                  <div className="flex">
+                    <Navbar />
+                    <IncomeList />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <div className="flex">
+                    <Navbar />
+                    <UserProfile />
+                  </div>
+                </ProtectedRoute>
+              }
+            />
+          </>
+        )}
       </Routes>
     </BrowserRouter>
   );
