@@ -4,9 +4,10 @@ import Signup from "./pages/Signup.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Navbar from "./components/Navbar.jsx";
-import ExpenseList from "./pages/ExpenseList";
-import IncomeList from "./pages/IncomeList";
-import UserProfile from "./pages/UserProfile";
+import ExpenseList from "./pages/ExpenseList.jsx";
+import IncomeList from "./pages/IncomeList.jsx";
+import UserProfile from "./pages/UserProfile.jsx";
+
 function App() {
   return (
     <BrowserRouter>
