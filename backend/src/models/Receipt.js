@@ -9,11 +9,12 @@ const Receipt = sequelize.define('Receipt', {
   },
   fileURL: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   size: {
     type: DataTypes.INTEGER, 
     allowNull: false, 
+    defaultValue: 0,
     validate: {
       max: 5 * 1024 * 1024,   //5Mb
     }

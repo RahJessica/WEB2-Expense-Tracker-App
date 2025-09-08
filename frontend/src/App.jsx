@@ -9,12 +9,16 @@ import IncomeList from "./pages/IncomeList.jsx";
 import UserProfile from "./pages/UserProfile.jsx";
 
 function App() {
+  const isLoggedIn = !!localStorage.getItem("token");
+
   return (
     <BrowserRouter>
-      <Navbar/>
+      {isLoggedIn && <Navbar />}
+      
       <Routes>
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/signup" element={<Signup />} />
+        
         <Route
           path="/dashboard"
           element={
@@ -30,7 +34,7 @@ function App() {
               <ExpenseList/>
             </ProtectedRoute>
           }
-          />
+        />
         <Route 
           path="/incomes" 
           element={
@@ -38,7 +42,7 @@ function App() {
               <IncomeList/>
             </ProtectedRoute>
           } 
-          />
+        />
         <Route 
           path="/profile" 
           element={
@@ -46,7 +50,7 @@ function App() {
               <UserProfile/>
             </ProtectedRoute>
           } 
-          />
+        />
       </Routes>
     </BrowserRouter>
   );

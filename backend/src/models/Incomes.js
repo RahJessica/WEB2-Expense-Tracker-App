@@ -14,6 +14,7 @@ const Income = sequelize.define('Income', {
   source: {
     type: DataTypes.STRING,
     allowNull:false,
+    defaultValue: 'unknown'
   },
   description: {
     type: DataTypes.STRING,
@@ -26,10 +27,14 @@ const Income = sequelize.define('Income', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  categoryId: {             
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  }
+  categoryId: {
+      type: DataTypes.INTEGER,
+      allowNull: true, 
+      references: {
+        model: "Categories",
+        key: "id"
+      }
+    }
 }, {
   tableName: 'Incomes',
   timestamps: true,

@@ -1,8 +1,12 @@
+require('dotenv').config();
 const express=require("express")
 const {sequelize}=require("./models")
-require('dotenv').config();
 
 const app = express();
+
+const cors = require("cors");
+app.use(cors({ origin: "http://localhost:5173" }));
+
 const PORT = process.env.PORT || 8080;
 
 app.use(express.json());
@@ -12,9 +16,9 @@ const incomeRoutes = require('./routes/income.js');
 const authRoutes = require('./routes/auth.js');
 const dashboardRoutes = require('./routes/dashboard.js');
 const expenseRoutes = require('./routes/expense.js');
-const categoryRoutes = require('./routes/category.js');
-const receiptRoutes = require('./routes/receipt.js');
-const userRoutes = require('./routes/users.js');
+const categoryRoutes = require('./routes/categories.js');
+const receiptRoutes = require('./routes/receipts.js');
+const userRoutes = require('./routes/user.js');
 
 app.use('/dashboard', dashboardRoutes);
 app.use('/categories', categoryRoutes);
