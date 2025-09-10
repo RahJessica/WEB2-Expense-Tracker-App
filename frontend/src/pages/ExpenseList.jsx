@@ -1,9 +1,35 @@
 import React, { useEffect, useState } from 'react';
+import api from "../services/api";
 
 const ExpenseList = ({ token }) => {
   const [expenses, setExpenses] = useState([]);
   const [receipts, setReceipts] = useState([]);
   const [uploading, setUploading] = useState({});
+  const [newExpense, setNewExpense] = useState({
+    amount: "",
+    description: "",
+    type: "one-time",
+    date: "",
+    startDate: "",
+    endDate: "",
+  });
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [popup, setPopup] = useState({ message: "", type: "" });
+
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const validateExpense = (expense) => {
+    if (!expense.amount || Number(expense.amount) <= 0) return "Le montant est requis et doit être > 0";
+    if (!expense.description || expense.description.trim() === "") return "La description est requise";
+    if (expense.type === "one-time" && !expense.date) return "La date est requise pour une dépense unique";
+    if (expense.type === "recurring" && !expense.startDate) return "La date de début est requise pour une dépense récurrente";
+    return null;
+  };
+
+  const showPopup = (message, type = "success") => {
+    setPopup({ message, type });
+    setTimeout(() => setPopup({ message: "", type: "" }), 3000);
+  };
 
   useEffect(() => {
     fetchExpenses();
@@ -12,25 +38,21 @@ const ExpenseList = ({ token }) => {
 
   const fetchExpenses = async () => {
     try {
-      const res = await fetch('http://localhost:8080/expenses', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      setExpenses(data);
+      const res = await api.get('/expense/expenses', { headers });
+      setExpenses(res.data);
     } catch (err) {
       console.error('Erreur fetch expenses:', err);
+      showPopup("Erreur de récupération des dépenses", "error");
     }
   };
 
   const fetchReceipts = async () => {
     try {
-      const res = await fetch('http://localhost:8080/receipts', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      setReceipts(data);
+      const res = await api.get('/receipts', { headers });
+      setReceipts(res.data);
     } catch (err) {
       console.error('Erreur fetch receipts:', err);
+      showPopup("Erreur de récupération des reçus", "error");
     }
   };
 
@@ -55,19 +77,152 @@ const ExpenseList = ({ token }) => {
 
       const data = await res.json();
       setReceipts(prev => [data, ...prev]);
-      alert('Reçu téléversé avec succès !');
+      showPopup('Reçu téléversé avec succès !', "success");
     } catch (err) {
       console.error(err);
-      alert(err.message);
+      showPopup(err.message, "error");
     } finally {
       setUploading(prev => ({ ...prev, [expenseId]: false }));
     }
   };
 
+  // --- Expenses CRUD ---
+  const handleAddExpense = async () => {
+    const error = validateExpense(newExpense);
+    if (error) {
+      showPopup(error, "error");
+      return;
+    }
+
+    const payload =
+      newExpense.type === "one-time"
+        ? { amount: Number(newExpense.amount), description: newExpense.description, type: "one-time", date: newExpense.date }
+        : { amount: Number(newExpense.amount), description: newExpense.description, type: "recurring", startDate: newExpense.startDate, endDate: newExpense.endDate || null };
+
+    try {
+      await api.post("/expense/new", payload, { headers });
+      setNewExpense({ amount: "", description: "", type: "one-time", date: "", startDate: "", endDate: "" });
+      fetchExpenses();
+      showPopup("Dépense ajoutée avec succès !", "success");
+    } catch (err) {
+      console.error("POST /expense/new ->", err?.response?.data || err.message);
+      showPopup(err.response?.data?.error || "Erreur lors de l'ajout de la dépense", "error");
+    }
+  };
+
+  const handleUpdateExpense = async () => {
+    if (!editingExpense) return;
+    const error = validateExpense(editingExpense);
+    if (error) {
+      showPopup(error, "error");
+      return;
+    }
+    try {
+      await api.put(`/expense/edit/${editingExpense.id}`, editingExpense, { headers });
+      setEditingExpense(null);
+      fetchExpenses();
+      showPopup("Dépense mise à jour", "success");
+    } catch (err) {
+      console.error("PUT /expense/edit/:id ->", err?.response?.data || err.message);
+      showPopup(err.response?.data?.error || "Erreur lors de la mise à jour de la dépense", "error");
+    }
+  };
+
+  const handleDeleteExpense = async (id) => {
+    if (!confirm("Supprimer cette dépense ?")) return;
+    try {
+      await api.delete(`/expense/delete/${id}`, { headers });
+      fetchExpenses();
+      showPopup("Dépense supprimée", "success");
+    } catch (err) {
+      console.error("DELETE /expense/delete/:id ->", err?.response?.data || err.message);
+      showPopup(err.response?.data?.error || "Erreur lors de la suppression de la dépense", "error");
+    }
+  };
+
   return (
     <div className="p-6 ml-64 bg-gray-100 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6 text-center text-indigo-600">Liste des Dépenses</h2>
+      {popup.message && (
+        <div
+          className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white ${
+            popup.type === "success" ? "bg-green-500" : "bg-red-500"
+          }`}
+        >
+          {popup.message}
+        </div>
+      )}
 
+      <h2 className="text-3xl font-bold mb-6 text-center text-indigo-600">Gestion des Dépenses</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="bg-white shadow rounded p-4">
+          <h2 className="font-semibold mb-4">Ajouter une Dépense</h2>
+          <input
+            type="number"
+            placeholder="Montant"
+            className="border p-2 w-full mb-2"
+            value={newExpense.amount}
+            onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+          />
+          <input
+            type="text"
+            placeholder="Description"
+            className="border p-2 w-full mb-2"
+            value={newExpense.description}
+            onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+          />
+          <select
+            className="border p-2 w-full mb-2"
+            value={newExpense.type}
+            onChange={(e) =>
+              setNewExpense({
+                ...newExpense,
+                type: e.target.value,
+                date: "",
+                startDate: "",
+                endDate: "",
+              })
+            }
+          >
+            <option value="one-time">Ponctuelle</option>
+            <option value="recurring">Récurrente</option>
+          </select>
+          {newExpense.type === "one-time" && (
+            <input
+              type="date"
+              className="border p-2 w-full mb-2"
+              value={newExpense.date}
+              onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
+            />
+          )}
+          {newExpense.type === "recurring" && (
+            <>
+              <label className="block text-sm mb-1">Date de début (requise)</label>
+              <input
+                type="date"
+                className="border p-2 w-full mb-2"
+                value={newExpense.startDate}
+                onChange={(e) => setNewExpense({ ...newExpense, startDate: e.target.value })}
+              />
+              <label className="block text-sm mb-1">Date de fin (optionnelle)</label>
+              <input
+                type="date"
+                className="border p-2 w-full mb-2"
+                value={newExpense.endDate}
+                onChange={(e) => setNewExpense({ ...newExpense, endDate: e.target.value })}
+              />
+            </>
+          )}
+          <button
+            className="bg-red-500 text-white px-4 py-2 rounded"
+            onClick={handleAddExpense}
+          >
+            Ajouter Dépense
+          </button>
+        </div>
+      </div>
+
+      {/*Expense List*/}
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
           <thead className="bg-indigo-500 text-white">
@@ -76,14 +231,15 @@ const ExpenseList = ({ token }) => {
               <th className="py-3 px-6 text-left">Montant</th>
               <th className="py-3 px-6 text-left">Date</th>
               <th className="py-3 px-6 text-left">Reçu</th>
+              <th className="py-3 px-6 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {expenses.map(exp => (
               <tr key={exp.id} className="border-b hover:bg-indigo-50 transition">
-                <td className="py-3 px-6">{exp.name}</td>
+                <td className="py-3 px-6">{exp.description || exp.name}</td>
                 <td className="py-3 px-6">{exp.amount}</td>
-                <td className="py-3 px-6">{exp.date}</td>
+                <td className="py-3 px-6">{exp.date || exp.startDate}</td>
                 <td className="py-3 px-6 space-y-2">
                   <div className="flex items-center space-x-2">
                     <label className="cursor-pointer bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded-md text-sm">
@@ -97,7 +253,6 @@ const ExpenseList = ({ token }) => {
                       />
                     </label>
                   </div>
-
                   {receipts
                     .filter(r => r.expenseId === exp.id)
                     .map(r => (
@@ -113,11 +268,104 @@ const ExpenseList = ({ token }) => {
                       </div>
                     ))}
                 </td>
+                <td className="py-3 px-6 space-x-2">
+                  <button
+                    className="bg-blue-500 text-white py-1 px-3 rounded-md text-sm"
+                    onClick={() => setEditingExpense(exp)}
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    className="bg-red-500 text-white py-1 px-3 rounded-md text-sm"
+                    onClick={() => handleDeleteExpense(exp.id)}
+                  >
+                    Supprimer
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/*Edit Expense*/}
+      {editingExpense && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
+            <h2 className="font-semibold mb-4">Modifier Dépense</h2>
+            <input
+              type="number"
+              placeholder="Montant"
+              className="border p-2 w-full mb-2"
+              value={editingExpense.amount}
+              onChange={(e) => setEditingExpense({ ...editingExpense, amount: e.target.value })}
+            />
+            <input
+              type="text"
+              placeholder="Description"
+              className="border p-2 w-full mb-2"
+              value={editingExpense.description}
+              onChange={(e) => setEditingExpense({ ...editingExpense, description: e.target.value })}
+            />
+            <select
+              className="border p-2 w-full mb-2"
+              value={editingExpense.type}
+              onChange={(e) =>
+                setEditingExpense({
+                  ...editingExpense,
+                  type: e.target.value,
+                  date: e.target.value === "one-time" ? editingExpense.date || "" : "",
+                  startDate: e.target.value === "recurring" ? editingExpense.startDate || "" : "",
+                  endDate: e.target.value === "recurring" ? editingExpense.endDate || "" : "",
+                })
+              }
+            >
+              <option value="one-time">Ponctuelle</option>
+              <option value="recurring">Récurrente</option>
+            </select>
+            {editingExpense.type === "one-time" && (
+              <input
+                type="date"
+                className="border p-2 w-full mb-2"
+                value={editingExpense.date}
+                onChange={(e) => setEditingExpense({ ...editingExpense, date: e.target.value })}
+              />
+            )}
+            {editingExpense.type === "recurring" && (
+              <>
+                <label className="block text-sm mb-1">Date de début (requise)</label>
+                <input
+                  type="date"
+                  className="border p-2 w-full mb-2"
+                  value={editingExpense.startDate}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, startDate: e.target.value })}
+                />
+                <label className="block text-sm mb-1">Date de fin (optionnelle)</label>
+                <input
+                  type="date"
+                  className="border p-2 w-full mb-2"
+                  value={editingExpense.endDate}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, endDate: e.target.value })}
+                />
+              </>
+            )}
+            <div className="flex justify-end space-x-2">
+              <button
+                className="bg-gray-300 text-black px-4 py-2 rounded"
+                onClick={() => setEditingExpense(null)}
+              >
+                Annuler
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+                onClick={handleUpdateExpense}
+              >
+                Sauvegarder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

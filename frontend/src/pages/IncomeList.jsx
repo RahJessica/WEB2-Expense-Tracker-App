@@ -1,199 +1,225 @@
 import React, { useEffect, useState } from 'react';
+import api from "../services/api";
 
-const IncomeList = () => {
+const IncomeList = ({ token }) => {
   const [incomes, setIncomes] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    amount: '',
-    source: '',
-    description: '',
-    date: '',
-    categoryId: ''
-  });
-  const [loading, setLoading] = useState(true);
+  const [newIncome, setNewIncome] = useState({ amount: "", description: "", date: "" });
+  const [editingIncome, setEditingIncome] = useState(null);
+  const [popup, setPopup] = useState({ message: "", type: "" });
 
-  const token = localStorage.getItem('token'); // Assure-toi que le token est stocké ici
+  const headers = { Authorization: `Bearer ${token}` };
 
-  // Récupérer les revenus
-  const fetchIncomes = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/incomes', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      setIncomes(data);
-    } catch (err) {
-      console.error('Erreur de chargement :', err);
-    } finally {
-      setLoading(false);
-    }
+  const showPopup = (message, type = "success") => {
+    setPopup({ message, type });
+    setTimeout(() => setPopup({ message: "", type: "" }), 3000);
   };
 
   useEffect(() => {
     fetchIncomes();
   }, []);
 
-  // Gestion du formulaire
-  const handleChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+  const fetchIncomes = async () => {
+    try {
+      const res = await api.get('/incomes/incomes', { headers });
+      setIncomes(res.data);
+    } catch (err) {
+      console.error('Erreur fetch incomes:', err);
+      showPopup("Erreur de récupération des revenus", "error");
+    }
   };
 
-  const handleAddIncome = async (e) => {
-    e.preventDefault();
+  // --- Incomes CRUD ---
+  const handleAddIncome = async () => {
+    if (!newIncome.amount || Number(newIncome.amount) <= 0) {
+      showPopup("Le montant est requis et doit être supérieur à 0", "error");
+      return;
+    }
+    if (!newIncome.description || newIncome.description.trim() === "") {
+      showPopup("La description est requise", "error");
+      return;
+    }
+    if (!newIncome.date) {
+      showPopup("La date est requise", "error");
+      return;
+    }
 
     try {
-      const response = await fetch('http://localhost:8080/incomes/new', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors de l’ajout du revenu');
-      }
-
-      const newIncome = await response.json();
-      setIncomes((prev) => [newIncome, ...prev]); // Ajout immédiat à la liste
-      setFormData({ amount: '', source: '', description: '', date: '', categoryId: '' });
-      setShowForm(false);
+      await api.post(
+        "/incomes/new",
+        { ...newIncome, amount: Number(newIncome.amount) },
+        { headers }
+      );
+      setNewIncome({ amount: "", description: "", date: "" });
+      fetchIncomes();
+      showPopup("Revenu ajouté avec succès !", "success");
     } catch (err) {
-      console.error('Erreur :', err.message);
+      console.error("POST /incomes/new ->", err?.response?.data || err.message);
+      showPopup(err.response?.data?.error || "Erreur lors de l'ajout du revenu", "error");
+    }
+  };
+
+  const handleUpdateIncome = async () => {
+    if (!editingIncome) return;
+    if (!editingIncome.amount || Number(editingIncome.amount) <= 0) {
+      showPopup("Le montant est requis et doit être supérieur à 0", "error");
+      return;
+    }
+    if (!editingIncome.description || editingIncome.description.trim() === "") {
+      showPopup("La description est requise", "error");
+      return;
+    }
+    if (!editingIncome.date) {
+      showPopup("La date est requise", "error");
+      return;
+    }
+    try {
+      await api.put(`/incomes/${editingIncome.id}`, editingIncome, { headers });
+      setEditingIncome(null);
+      fetchIncomes();
+      showPopup("Revenu mis à jour", "success");
+    } catch (err) {
+      console.error("PUT /incomes/:id ->", err?.response?.data || err.message);
+      showPopup(err.response?.data?.error || "Erreur lors de la mise à jour du revenu", "error");
+    }
+  };
+
+  const handleDeleteIncome = async (id) => {
+    if (!confirm("Supprimer ce revenu ?")) return;
+    try {
+      await api.delete(`/incomes/delete/${id}`, { headers });
+      fetchIncomes();
+      showPopup("Revenu supprimé", "success");
+    } catch (err) {
+      console.error("DELETE /incomes/delete/:id ->", err?.response?.data || err.message);
+      showPopup(err.response?.data?.error || "Erreur lors de la suppression du revenu", "error");
     }
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-4">Liste des Revenus</h2>
-
-      {loading ? (
-        <p>Chargement...</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full border border-gray-300 text-sm text-left">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="py-2 px-4 border">ID</th>
-                <th className="py-2 px-4 border">Montant (€)</th>
-                <th className="py-2 px-4 border">Source</th>
-                <th className="py-2 px-4 border">Description</th>
-                <th className="py-2 px-4 border">Date</th>
-                <th className="py-2 px-4 border">Catégorie</th>
-              </tr>
-            </thead>
-            <tbody>
-              {incomes.map((income) => (
-                <tr key={income.id} className="hover:bg-gray-50">
-                  <td className="py-2 px-4 border">{income.id}</td>
-                  <td className="py-2 px-4 border">{income.amount}</td>
-                  <td className="py-2 px-4 border">{income.source || '-'}</td>
-                  <td className="py-2 px-4 border">{income.description || '-'}</td>
-                  <td className="py-2 px-4 border">
-                    {new Date(income.date).toLocaleDateString()}
-                  </td>
-                  <td className="py-2 px-4 border">{income.categoryId}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="p-6 ml-64 bg-gray-100 min-h-screen">
+      {popup.message && (
+        <div
+          className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white ${
+            popup.type === "success" ? "bg-green-500" : "bg-red-500"
+          }`}
+        >
+          {popup.message}
         </div>
       )}
 
-      {/* Bouton Ajouter */}
-      <div className="mt-6 flex justify-end">
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-        >
-          {showForm ? 'Annuler' : 'Ajouter'}
-        </button>
+      <h2 className="text-3xl font-bold mb-6 text-center text-indigo-600">Gestion des Revenus</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* ---- Add Income ---- */}
+        <div className="bg-white shadow rounded p-4">
+          <h2 className="font-semibold mb-4">Ajouter un Revenu</h2>
+          <input
+            type="number"
+            placeholder="Montant"
+            className="border p-2 w-full mb-2"
+            value={newIncome.amount}
+            onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })}
+          />
+          <input
+            type="text"
+            placeholder="Description"
+            className="border p-2 w-full mb-2"
+            value={newIncome.description}
+            onChange={(e) => setNewIncome({ ...newIncome, description: e.target.value })}
+          />
+          <input
+            type="date"
+            className="border p-2 w-full mb-2"
+            value={newIncome.date}
+            onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })}
+          />
+          <button
+            className="bg-green-500 text-white px-4 py-2 rounded"
+            onClick={handleAddIncome}
+          >
+            Ajouter Revenu
+          </button>
+        </div>
       </div>
 
-      {/* Formulaire d'ajout */}
-      {showForm && (
-        <form
-          onSubmit={handleAddIncome}
-          className="mt-6 border p-4 rounded bg-gray-50 shadow-sm"
-        >
-          <h3 className="text-lg font-semibold mb-4">Nouveau Revenu</h3>
+      {/*Income List*/}
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+          <thead className="bg-indigo-500 text-white">
+            <tr>
+              <th className="py-3 px-6 text-left">Description</th>
+              <th className="py-3 px-6 text-left">Montant</th>
+              <th className="py-3 px-6 text-left">Date</th>
+              <th className="py-3 px-6 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {incomes.map(inc => (
+              <tr key={inc.id} className="border-b hover:bg-indigo-50 transition">
+                <td className="py-3 px-6">{inc.description}</td>
+                <td className="py-3 px-6">{inc.amount}</td>
+                <td className="py-3 px-6">{inc.date}</td>
+                <td className="py-3 px-6 space-x-2">
+                  <button
+                    className="bg-blue-500 text-white py-1 px-3 rounded-md text-sm"
+                    onClick={() => setEditingIncome(inc)}
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    className="bg-red-500 text-white py-1 px-3 rounded-md text-sm"
+                    onClick={() => handleDeleteIncome(inc.id)}
+                  >
+                    Supprimer
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium">Montant (€)</label>
-              <input
-                type="number"
-                name="amount"
-                value={formData.amount}
-                onChange={handleChange}
-                required
-                className="w-full mt-1 p-2 border rounded"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium">Source</label>
-              <input
-                type="text"
-                name="source"
-                value={formData.source}
-                onChange={handleChange}
-                required
-                className="w-full mt-1 p-2 border rounded"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium">Description</label>
-              <input
-                type="text"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                className="w-full mt-1 p-2 border rounded"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium">Date</label>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                className="w-full mt-1 p-2 border rounded"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium">Catégorie ID</label>
-              <input
-                type="number"
-                name="categoryId"
-                value={formData.categoryId}
-                onChange={handleChange}
-                required
-                className="w-full mt-1 p-2 border rounded"
-              />
+      {/*Edit Incom*/}
+      {editingIncome && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
+            <h2 className="font-semibold mb-4">Modifier Revenu</h2>
+            <input
+              type="number"
+              placeholder="Montant"
+              className="border p-2 w-full mb-2"
+              value={editingIncome.amount}
+              onChange={(e) => setEditingIncome({ ...editingIncome, amount: e.target.value })}
+            />
+            <input
+              type="text"
+              placeholder="Description"
+              className="border p-2 w-full mb-2"
+              value={editingIncome.description}
+              onChange={(e) => setEditingIncome({ ...editingIncome, description: e.target.value })}
+            />
+            <input
+              type="date"
+              className="border p-2 w-full mb-2"
+              value={editingIncome.date}
+              onChange={(e) => setEditingIncome({ ...editingIncome, date: e.target.value })}
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                className="bg-gray-300 text-black px-4 py-2 rounded"
+                onClick={() => setEditingIncome(null)}
+              >
+                Annuler
+              </button>
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+                onClick={handleUpdateIncome}
+              >
+                Sauvegarder
+              </button>
             </div>
           </div>
-
-          <div className="mt-4 flex justify-end">
-            <button
-              type="submit"
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-            >
-              Sauvegarder
-            </button>
-          </div>
-        </form>
+        </div>
       )}
     </div>
   );

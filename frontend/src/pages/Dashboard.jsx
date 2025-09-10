@@ -5,21 +5,8 @@ import Navbar from "../components/Navbar";
 
 export default function Dashboard() {
   const [summary, setSummary] = useState({ totalIncome: 0, totalExpenses: 0, balance: 0 });
-  const [expenses, setExpenses] = useState([]);
-  const [incomes, setIncomes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newExpense, setNewExpense] = useState({
-    amount: "",
-    description: "",
-    type: "one-time", // "one-time" ou "recurring"
-    date: "",        // utilisé si one-time
-    startDate: "",   // utilisé si recurring
-    endDate: "",     // optionnel si recurring
-  });
-  const [newIncome, setNewIncome] = useState({ amount: "", description: "", date: "" });
   const [popup, setPopup] = useState({ message: "", type: "" });
-  const [editingExpense, setEditingExpense] = useState(null);
-  const [editingIncome, setEditingIncome] = useState(null);
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
@@ -44,20 +31,6 @@ export default function Dashboard() {
         api.get("/dashboard", { headers }),
       ]);
 
-      if (expRes.status === "fulfilled") {
-        setExpenses(expRes.value.data);
-      } else {
-        console.error("GET /expense/expenses ->", expRes.reason);
-        showPopup("Erreur de récupération des dépenses", "error");
-      }
-
-      if (incRes.status === "fulfilled") {
-        setIncomes(incRes.value.data);
-      } else {
-        console.error("GET /incomes/incomes ->", incRes.reason);
-        showPopup("Erreur de récupération des revenus", "error");
-      }
-
       if (sumRes.status === "fulfilled") {
         setSummary(sumRes.value.data);
       } else {
@@ -76,107 +49,6 @@ export default function Dashboard() {
       showPopup("Erreur réseau", "error");
     } finally {
       setLoading(false);
-    }
-  };
-
-  // --- Expenses CRUD ---
-  const handleAddExpense = async () => {
-    try {
-      const payload =
-        newExpense.type === "one-time"
-          ? {
-              amount: Number(newExpense.amount) || 0,
-              description: newExpense.description,
-              type: "one-time",
-              date: newExpense.date,
-            }
-          : {
-              amount: Number(newExpense.amount) || 0,
-              description: newExpense.description,
-              type: "recurring",
-              startDate: newExpense.startDate,
-              endDate: newExpense.endDate || null,
-            };
-
-      await api.post("/expense/new", payload, { headers });
-      setNewExpense({
-        amount: "",
-        description: "",
-        type: "one-time",
-        date: "",
-        startDate: "",
-        endDate: "",
-      });
-      fetchData();
-      showPopup("Expense added", "success");
-    } catch (err) {
-      console.error("POST /expense/new ->", err?.response?.data || err.message);
-      showPopup(err.response?.data?.error || "Error adding expense", "error");
-    }
-  };
-
-  const handleUpdateExpense = async () => {
-    try {
-      await api.put(`/expense/edit/${editingExpense.id}`, editingExpense, { headers });
-      setEditingExpense(null);
-      fetchData();
-      showPopup("Expense updated", "success");
-    } catch (err) {
-      console.error("PUT /expense/edit/:id ->", err?.response?.data || err.message);
-      showPopup(err.response?.data?.error || "Error updating expense", "error");
-    }
-  };
-
-  const handleDeleteExpense = async (id) => {
-    if (!confirm("Delete this expense?")) return;
-    try {
-      await api.delete(`/expense/delete/${id}`, { headers });
-      fetchData();
-      showPopup("Expense deleted", "success");
-    } catch (err) {
-      console.error("DELETE /expense/delete/:id ->", err?.response?.data || err.message);
-      showPopup(err.response?.data?.error || "Error deleting expense", "error");
-    }
-  };
-
-  // --- Incomes CRUD ---
-  const handleAddIncome = async () => {
-    try {
-      await api.post(
-        "/incomes/new",
-        { ...newIncome, amount: Number(newIncome.amount) || 0 },
-        { headers }
-      );
-      setNewIncome({ amount: "", description: "", date: "" });
-      fetchData();
-      showPopup("Income added", "success");
-    } catch (err) {
-      console.error("POST /incomes/new ->", err?.response?.data || err.message);
-      showPopup(err.response?.data?.error || "Error adding income", "error");
-    }
-  };
-
-  const handleUpdateIncome = async () => {
-    try {
-      await api.put(`/incomes/${editingIncome.id}`, editingIncome, { headers });
-      setEditingIncome(null);
-      fetchData();
-      showPopup("Income updated", "success");
-    } catch (err) {
-      console.error("PUT /incomes/:id ->", err?.response?.data || err.message);
-      showPopup(err.response?.data?.error || "Error updating income", "error");
-    }
-  };
-
-  const handleDeleteIncome = async (id) => {
-    if (!confirm("Delete this income?")) return;
-    try {
-      await api.delete(`/incomes/delete/${id}`, { headers });
-      fetchData();
-      showPopup("Income deleted", "success");
-    } catch (err) {
-      console.error("DELETE /incomes/delete/:id ->", err?.response?.data || err.message);
-      showPopup(err.response?.data?.error || "Error deleting income", "error");
     }
   };
 
@@ -210,115 +82,6 @@ export default function Dashboard() {
           <div className="bg-blue-100 p-4 rounded shadow">Balance: {summary.balance} Ar</div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* ---- Add Expense ---- */}
-          <div className="bg-white shadow rounded p-4">
-            <h2 className="font-semibold mb-4">Add Expense</h2>
-            <input
-              type="number"
-              placeholder="Amount"
-              className="border p-2 w-full mb-2"
-              value={newExpense.amount}
-              onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="Description"
-              className="border p-2 w-full mb-2"
-              value={newExpense.description}
-              onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
-            />
-
-            {/* Choix type */}
-            <select
-              className="border p-2 w-full mb-2"
-              value={newExpense.type}
-              onChange={(e) =>
-                setNewExpense({
-                  ...newExpense,
-                  type: e.target.value,
-                  date: "",
-                  startDate: "",
-                  endDate: "",
-                })
-              }
-            >
-              <option value="one-time">One-time</option>
-              <option value="recurring">Recurring</option>
-            </select>
-
-            {/* Si one-time -> date unique */}
-            {newExpense.type === "one-time" && (
-              <input
-                type="date"
-                className="border p-2 w-full mb-2"
-                value={newExpense.date}
-                onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
-              />
-            )}
-
-            {/* Si recurring -> start + end */}
-            {newExpense.type === "recurring" && (
-              <>
-                <label className="block text-sm mb-1">Start Date (required)</label>
-                <input
-                  type="date"
-                  className="border p-2 w-full mb-2"
-                  value={newExpense.startDate}
-                  onChange={(e) => setNewExpense({ ...newExpense, startDate: e.target.value })}
-                />
-
-                <label className="block text-sm mb-1">End Date (optional)</label>
-                <input
-                  type="date"
-                  className="border p-2 w-full mb-2"
-                  value={newExpense.endDate}
-                  onChange={(e) => setNewExpense({ ...newExpense, endDate: e.target.value })}
-                />
-              </>
-            )}
-
-            <button
-              className="bg-red-500 text-white px-4 py-2 rounded"
-              onClick={handleAddExpense}
-            >
-              Add Expense
-            </button>
-          </div>
-
-          {/* ---- Add Income ---- */}
-          <div className="bg-white shadow rounded p-4">
-            <h2 className="font-semibold mb-4">Add Income</h2>
-            <input
-              type="number"
-              placeholder="Amount"
-              className="border p-2 w-full mb-2"
-              value={newIncome.amount}
-              onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="Description"
-              className="border p-2 w-full mb-2"
-              value={newIncome.description}
-              onChange={(e) => setNewIncome({ ...newIncome, description: e.target.value })}
-            />
-            <input
-              type="date"
-              className="border p-2 w-full mb-2"
-              value={newIncome.date}
-              onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })}
-            />
-            <button
-              className="bg-green-500 text-white px-4 py-2 rounded"
-              onClick={handleAddIncome}
-            >
-              Add Income
-            </button>
-          </div>
-        </div>
-
-        {/* ---- Graphique ---- */}
         <div className="bg-white shadow rounded p-6 mt-6">
           <h2 className="font-semibold mb-4">Overview</h2>
           <ResponsiveContainer width="100%" height={300}>
