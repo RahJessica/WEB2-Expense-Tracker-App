@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -9,15 +10,22 @@ import IncomeList from "./pages/IncomeList.jsx";
 import UserProfile from "./pages/UserProfile.jsx";
 
 function App() {
-  const token = localStorage.getItem("token");
+  const [token, setToken] = useState(localStorage.getItem("token"));
+
+  // quand le localStorage change (ex: login ou logout)
+  useEffect(() => {
+    const syncToken = () => setToken(localStorage.getItem("token"));
+    window.addEventListener("storage", syncToken);
+    return () => window.removeEventListener("storage", syncToken);
+  }, []);
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/auth/login" element={<Login />} />
-        <Route path="/auth/signup" element={<Signup />} />
+        <Route path="/auth/login" element={<Login setToken={setToken} />} />
+        <Route path="/auth/signup" element={<Signup setToken={setToken} />} />
 
-        {token && (
+        {token ? (
           <>
             <Route
               path="/dashboard"
@@ -64,10 +72,13 @@ function App() {
               }
             />
           </>
+        ) : (
+          // si pas de token → on redirige vers login
+          <Route path="*" element={<Navigate to="/auth/login" />} />
         )}
       </Routes>
     </BrowserRouter>
   );
 }
 
-export default App;
+export default App;
