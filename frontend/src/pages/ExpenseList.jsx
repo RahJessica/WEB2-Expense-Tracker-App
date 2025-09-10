@@ -65,7 +65,7 @@ const ExpenseList = ({ token }) => {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 ml-64 bg-gray-100 min-h-screen">
       <h2 className="text-3xl font-bold mb-6 text-center text-indigo-600">Liste des Dépenses</h2>
 
       <div className="overflow-x-auto">
