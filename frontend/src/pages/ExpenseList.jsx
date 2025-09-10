@@ -18,11 +18,25 @@ const ExpenseList = ({ token }) => {
 
   const headers = { Authorization: `Bearer ${token}` };
 
+  const formatDateTime = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return ""; 
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getFullYear();
+    let hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12; // Convert to 12-hour format
+    return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
+  };
+
   const validateExpense = (expense) => {
-    if (!expense.amount || Number(expense.amount) <= 0) return "Le montant est requis et doit être > 0";
-    if (!expense.description || expense.description.trim() === "") return "La description est requise";
-    if (expense.type === "one-time" && !expense.date) return "La date est requise pour une dépense unique";
-    if (expense.type === "recurring" && !expense.startDate) return "La date de début est requise pour une dépense récurrente";
+    if (!expense.amount || Number(expense.amount) <= 0) return "Amount is required and must be > 0";
+    if (!expense.description || expense.description.trim() === "") return "Description is required";
+    if (expense.type === "one-time" && !expense.date) return "Date is required for a one-time expense";
+    if (expense.type === "recurring" && !expense.startDate) return "Start date is required for a recurring expense";
     return null;
   };
 
@@ -41,8 +55,8 @@ const ExpenseList = ({ token }) => {
       const res = await api.get('/expense/expenses', { headers });
       setExpenses(res.data);
     } catch (err) {
-      console.error('Erreur fetch expenses:', err);
-      showPopup("Erreur de récupération des dépenses", "error");
+      console.error('Error fetching expenses:', err?.response?.data || err.message);
+      showPopup("Failed to fetch expenses", "error");
     }
   };
 
@@ -51,8 +65,12 @@ const ExpenseList = ({ token }) => {
       const res = await api.get('/receipts', { headers });
       setReceipts(res.data);
     } catch (err) {
-      console.error('Erreur fetch receipts:', err);
-      showPopup("Erreur de récupération des reçus", "error");
+      console.error('Error fetching receipts:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+      });
+      showPopup(err.response?.data?.error || "Failed to fetch receipts", "error");
     }
   };
 
@@ -73,13 +91,17 @@ const ExpenseList = ({ token }) => {
         body: formData
       });
 
-      if (!res.ok) throw new Error('Erreur lors du téléversement');
+      if (!res.ok) throw new Error('Failed to upload receipt');
 
       const data = await res.json();
       setReceipts(prev => [data, ...prev]);
-      showPopup('Reçu téléversé avec succès !', "success");
+      showPopup('Receipt uploaded successfully!', "success");
     } catch (err) {
-      console.error(err);
+      console.error('Error uploading receipt:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+      });
       showPopup(err.message, "error");
     } finally {
       setUploading(prev => ({ ...prev, [expenseId]: false }));
@@ -103,10 +125,10 @@ const ExpenseList = ({ token }) => {
       await api.post("/expense/new", payload, { headers });
       setNewExpense({ amount: "", description: "", type: "one-time", date: "", startDate: "", endDate: "" });
       fetchExpenses();
-      showPopup("Dépense ajoutée avec succès !", "success");
+      showPopup("Expense added successfully!", "success");
     } catch (err) {
       console.error("POST /expense/new ->", err?.response?.data || err.message);
-      showPopup(err.response?.data?.error || "Erreur lors de l'ajout de la dépense", "error");
+      showPopup(err.response?.data?.error || "Failed to add expense", "error");
     }
   };
 
@@ -121,22 +143,22 @@ const ExpenseList = ({ token }) => {
       await api.put(`/expense/edit/${editingExpense.id}`, editingExpense, { headers });
       setEditingExpense(null);
       fetchExpenses();
-      showPopup("Dépense mise à jour", "success");
+      showPopup("Expense updated successfully", "success");
     } catch (err) {
       console.error("PUT /expense/edit/:id ->", err?.response?.data || err.message);
-      showPopup(err.response?.data?.error || "Erreur lors de la mise à jour de la dépense", "error");
+      showPopup(err.response?.data?.error || "Failed to update expense", "error");
     }
   };
 
   const handleDeleteExpense = async (id) => {
-    if (!confirm("Supprimer cette dépense ?")) return;
+    if (!confirm("Delete this expense?")) return;
     try {
       await api.delete(`/expense/delete/${id}`, { headers });
       fetchExpenses();
-      showPopup("Dépense supprimée", "success");
+      showPopup("Expense deleted successfully", "success");
     } catch (err) {
       console.error("DELETE /expense/delete/:id ->", err?.response?.data || err.message);
-      showPopup(err.response?.data?.error || "Erreur lors de la suppression de la dépense", "error");
+      showPopup(err.response?.data?.error || "Failed to delete expense", "error");
     }
   };
 
@@ -152,14 +174,15 @@ const ExpenseList = ({ token }) => {
         </div>
       )}
 
-      <h2 className="text-3xl font-bold mb-6 text-center text-indigo-600">Gestion des Dépenses</h2>
+      <h2 className="text-3xl font-bold mb-6 text-center text-indigo-600">Expense Management</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* ---- Add Expense ---- */}
         <div className="bg-white shadow rounded p-4">
-          <h2 className="font-semibold mb-4">Ajouter une Dépense</h2>
+          <h2 className="font-semibold mb-4">Add Expense</h2>
           <input
             type="number"
-            placeholder="Montant"
+            placeholder="Amount"
             className="border p-2 w-full mb-2"
             value={newExpense.amount}
             onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
@@ -184,8 +207,8 @@ const ExpenseList = ({ token }) => {
               })
             }
           >
-            <option value="one-time">Ponctuelle</option>
-            <option value="recurring">Récurrente</option>
+            <option value="one-time">One-Time</option>
+            <option value="recurring">Recurring</option>
           </select>
           {newExpense.type === "one-time" && (
             <input
@@ -197,14 +220,14 @@ const ExpenseList = ({ token }) => {
           )}
           {newExpense.type === "recurring" && (
             <>
-              <label className="block text-sm mb-1">Date de début (requise)</label>
+              <label className="block text-sm mb-1">Start Date (required)</label>
               <input
                 type="date"
                 className="border p-2 w-full mb-2"
                 value={newExpense.startDate}
                 onChange={(e) => setNewExpense({ ...newExpense, startDate: e.target.value })}
               />
-              <label className="block text-sm mb-1">Date de fin (optionnelle)</label>
+              <label className="block text-sm mb-1">End Date (optional)</label>
               <input
                 type="date"
                 className="border p-2 w-full mb-2"
@@ -217,20 +240,20 @@ const ExpenseList = ({ token }) => {
             className="bg-red-500 text-white px-4 py-2 rounded"
             onClick={handleAddExpense}
           >
-            Ajouter Dépense
+            Add Expense
           </button>
         </div>
       </div>
 
-      {/*Expense List*/}
+      {/* ---- Expense List ---- */}
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
           <thead className="bg-indigo-500 text-white">
             <tr>
-              <th className="py-3 px-6 text-left">Nom</th>
-              <th className="py-3 px-6 text-left">Montant</th>
-              <th className="py-3 px-6 text-left">Date</th>
-              <th className="py-3 px-6 text-left">Reçu</th>
+              <th className="py-3 px-6 text-left">Description</th>
+              <th className="py-3 px-6 text-left">Amount</th>
+              <th className="py-3 px-6 text-left">Date & Time</th>
+              <th className="py-3 px-6 text-left">Receipt</th>
               <th className="py-3 px-6 text-left">Actions</th>
             </tr>
           </thead>
@@ -239,11 +262,11 @@ const ExpenseList = ({ token }) => {
               <tr key={exp.id} className="border-b hover:bg-indigo-50 transition">
                 <td className="py-3 px-6">{exp.description || exp.name}</td>
                 <td className="py-3 px-6">{exp.amount}</td>
-                <td className="py-3 px-6">{exp.date || exp.startDate}</td>
+                <td className="py-3 px-6">{formatDateTime(exp.date || exp.startDate)}</td>
                 <td className="py-3 px-6 space-y-2">
                   <div className="flex items-center space-x-2">
                     <label className="cursor-pointer bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded-md text-sm">
-                      {uploading[exp.id] ? 'Téléversement...' : 'Téléverser'}
+                      {uploading[exp.id] ? 'Uploading...' : 'Upload'}
                       <input
                         type="file"
                         accept=".jpg,.jpeg,.png,.pdf"
@@ -263,7 +286,7 @@ const ExpenseList = ({ token }) => {
                           rel="noopener noreferrer"
                           className="text-indigo-600 hover:text-indigo-800 underline text-sm"
                         >
-                          Voir le reçu
+                          View Receipt
                         </a>
                       </div>
                     ))}
@@ -273,13 +296,13 @@ const ExpenseList = ({ token }) => {
                     className="bg-blue-500 text-white py-1 px-3 rounded-md text-sm"
                     onClick={() => setEditingExpense(exp)}
                   >
-                    Modifier
+                    Edit
                   </button>
                   <button
                     className="bg-red-500 text-white py-1 px-3 rounded-md text-sm"
                     onClick={() => handleDeleteExpense(exp.id)}
                   >
-                    Supprimer
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -288,14 +311,14 @@ const ExpenseList = ({ token }) => {
         </table>
       </div>
 
-      {/*Edit Expense*/}
+      {/* ---- Edit Expense Modal ---- */}
       {editingExpense && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h2 className="font-semibold mb-4">Modifier Dépense</h2>
+            <h2 className="font-semibold mb-4">Edit Expense</h2>
             <input
               type="number"
-              placeholder="Montant"
+              placeholder="Amount"
               className="border p-2 w-full mb-2"
               value={editingExpense.amount}
               onChange={(e) => setEditingExpense({ ...editingExpense, amount: e.target.value })}
@@ -320,8 +343,8 @@ const ExpenseList = ({ token }) => {
                 })
               }
             >
-              <option value="one-time">Ponctuelle</option>
-              <option value="recurring">Récurrente</option>
+              <option value="one-time">One-Time</option>
+              <option value="recurring">Recurring</option>
             </select>
             {editingExpense.type === "one-time" && (
               <input
@@ -333,14 +356,14 @@ const ExpenseList = ({ token }) => {
             )}
             {editingExpense.type === "recurring" && (
               <>
-                <label className="block text-sm mb-1">Date de début (requise)</label>
+                <label className="block text-sm mb-1">Start Date (required)</label>
                 <input
                   type="date"
                   className="border p-2 w-full mb-2"
                   value={editingExpense.startDate}
                   onChange={(e) => setEditingExpense({ ...editingExpense, startDate: e.target.value })}
                 />
-                <label className="block text-sm mb-1">Date de fin (optionnelle)</label>
+                <label className="block text-sm mb-1">End Date (optional)</label>
                 <input
                   type="date"
                   className="border p-2 w-full mb-2"
@@ -354,13 +377,13 @@ const ExpenseList = ({ token }) => {
                 className="bg-gray-300 text-black px-4 py-2 rounded"
                 onClick={() => setEditingExpense(null)}
               >
-                Annuler
+                Cancel
               </button>
               <button
                 className="bg-blue-500 text-white px-4 py-2 rounded"
                 onClick={handleUpdateExpense}
               >
-                Sauvegarder
+                Save
               </button>
             </div>
           </div>
