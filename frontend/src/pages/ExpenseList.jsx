@@ -1,4 +1,3 @@
-// ExpenseList.js
 import React, { useEffect, useState } from 'react';
 import api from "../services/api";
 
@@ -16,7 +15,7 @@ const ExpenseList = ({ token }) => {
   });
   const [editingExpense, setEditingExpense] = useState(null);
   const [popup, setPopup] = useState({ message: "", type: "" });
-  const [showAddForm, setShowAddForm] = useState(false); // 👈 Bouton + Form
+  const [showAddForm, setShowAddForm] = useState(false); 
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -139,7 +138,7 @@ const ExpenseList = ({ token }) => {
         endDate: "",
       });
       fetchExpenses();
-      setShowAddForm(false); // 👈 Cache le formulaire après ajout
+      setShowAddForm(false); 
       showPopup("Expense added successfully!", "success");
     } catch (err) {
       console.error("POST /expense/new ->", err?.response?.data || err.message);
@@ -159,12 +158,12 @@ const ExpenseList = ({ token }) => {
       <h2 className="text-3xl font-bold mb-6 text-center text-indigo-600">Expense Management</h2>
 
       {/* Bouton pour afficher le formulaire */}
-      <div className="mb-6">
+      <div className="mb-6 flex justify-center items-center">
         <button
           onClick={() => setShowAddForm(true)}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded shadow"
         >
-          + Ajouter une dépense
+          + Ajouter 
         </button>
       </div>
 
