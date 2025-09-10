@@ -8,7 +8,14 @@ export default function Dashboard() {
   const [expenses, setExpenses] = useState([]);
   const [incomes, setIncomes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newExpense, setNewExpense] = useState({ amount: "", description: "", type: "one-time", date: "" });
+  const [newExpense, setNewExpense] = useState({
+    amount: "",
+    description: "",
+    type: "one-time", // "one-time" ou "recurring"
+    date: "",        // utilisé si one-time
+    startDate: "",   // utilisé si recurring
+    endDate: "",     // optionnel si recurring
+  });
   const [newIncome, setNewIncome] = useState({ amount: "", description: "", date: "" });
   const [popup, setPopup] = useState({ message: "", type: "" });
   const [editingExpense, setEditingExpense] = useState(null);
@@ -32,22 +39,22 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const [expRes, incRes, sumRes] = await Promise.allSettled([
-        api.get("/expense/expenses", { headers }),   
-        api.get("/incomes/incomes", { headers }),   
-        api.get("/dashboard", { headers })          
+        api.get("/expense/expenses", { headers }),
+        api.get("/incomes/incomes", { headers }),
+        api.get("/dashboard", { headers }),
       ]);
 
       if (expRes.status === "fulfilled") {
         setExpenses(expRes.value.data);
       } else {
-        console.error("GET /expense/expenses ->", expRes.reason?.response?.status, expRes.reason?.config?.url, expRes.reason?.response?.data || expRes.reason?.message);
+        console.error("GET /expense/expenses ->", expRes.reason);
         showPopup("Erreur de récupération des dépenses", "error");
       }
 
       if (incRes.status === "fulfilled") {
         setIncomes(incRes.value.data);
       } else {
-        console.error("GET /incomes/incomes ->", incRes.reason?.response?.status, incRes.reason?.config?.url, incRes.reason?.response?.data || incRes.reason?.message);
+        console.error("GET /incomes/incomes ->", incRes.reason);
         showPopup("Erreur de récupération des revenus", "error");
       }
 
@@ -61,11 +68,11 @@ export default function Dashboard() {
         setSummary({
           totalIncome,
           totalExpenses,
-          balance: totalIncome - totalExpenses
+          balance: totalIncome - totalExpenses,
         });
       }
     } catch (err) {
-      console.error("fetchData error ->", err?.response?.status, err?.config?.url, err?.response?.data || err?.message);
+      console.error("fetchData error ->", err);
       showPopup("Erreur réseau", "error");
     } finally {
       setLoading(false);
@@ -75,12 +82,35 @@ export default function Dashboard() {
   // --- Expenses CRUD ---
   const handleAddExpense = async () => {
     try {
-      await api.post("/expense/new", { ...newExpense, amount: Number(newExpense.amount) || 0 }, { headers });
-      setNewExpense({ amount: "", description: "", type: "one-time", date: "" });
+      const payload =
+        newExpense.type === "one-time"
+          ? {
+              amount: Number(newExpense.amount) || 0,
+              description: newExpense.description,
+              type: "one-time",
+              date: newExpense.date,
+            }
+          : {
+              amount: Number(newExpense.amount) || 0,
+              description: newExpense.description,
+              type: "recurring",
+              startDate: newExpense.startDate,
+              endDate: newExpense.endDate || null,
+            };
+
+      await api.post("/expense/new", payload, { headers });
+      setNewExpense({
+        amount: "",
+        description: "",
+        type: "one-time",
+        date: "",
+        startDate: "",
+        endDate: "",
+      });
       fetchData();
       showPopup("Expense added", "success");
     } catch (err) {
-      console.error("POST /expense/new ->", err?.response?.status, err?.response?.data || err?.message);
+      console.error("POST /expense/new ->", err?.response?.data || err.message);
       showPopup(err.response?.data?.error || "Error adding expense", "error");
     }
   };
@@ -92,7 +122,7 @@ export default function Dashboard() {
       fetchData();
       showPopup("Expense updated", "success");
     } catch (err) {
-      console.error("PUT /expense/edit/:id ->", err?.response?.status, err?.response?.data || err?.message);
+      console.error("PUT /expense/edit/:id ->", err?.response?.data || err.message);
       showPopup(err.response?.data?.error || "Error updating expense", "error");
     }
   };
@@ -104,7 +134,7 @@ export default function Dashboard() {
       fetchData();
       showPopup("Expense deleted", "success");
     } catch (err) {
-      console.error("DELETE /expense/delete/:id ->", err?.response?.status, err?.response?.data || err?.message);
+      console.error("DELETE /expense/delete/:id ->", err?.response?.data || err.message);
       showPopup(err.response?.data?.error || "Error deleting expense", "error");
     }
   };
@@ -112,12 +142,16 @@ export default function Dashboard() {
   // --- Incomes CRUD ---
   const handleAddIncome = async () => {
     try {
-      await api.post("/incomes/new", { ...newIncome, amount: Number(newIncome.amount) || 0 }, { headers });
+      await api.post(
+        "/incomes/new",
+        { ...newIncome, amount: Number(newIncome.amount) || 0 },
+        { headers }
+      );
       setNewIncome({ amount: "", description: "", date: "" });
       fetchData();
       showPopup("Income added", "success");
     } catch (err) {
-      console.error("POST /incomes/new ->", err?.response?.status, err?.response?.data || err?.message);
+      console.error("POST /incomes/new ->", err?.response?.data || err.message);
       showPopup(err.response?.data?.error || "Error adding income", "error");
     }
   };
@@ -129,7 +163,7 @@ export default function Dashboard() {
       fetchData();
       showPopup("Income updated", "success");
     } catch (err) {
-      console.error("PUT /incomes/:id ->", err?.response?.status, err?.response?.data || err?.message);
+      console.error("PUT /incomes/:id ->", err?.response?.data || err.message);
       showPopup(err.response?.data?.error || "Error updating income", "error");
     }
   };
@@ -141,17 +175,16 @@ export default function Dashboard() {
       fetchData();
       showPopup("Income deleted", "success");
     } catch (err) {
-      console.error("DELETE /incomes/delete/:id ->", err?.response?.status, err?.response?.data || err?.message);
+      console.error("DELETE /incomes/delete/:id ->", err?.response?.data || err.message);
       showPopup(err.response?.data?.error || "Error deleting income", "error");
     }
   };
 
   if (loading) return <p className="ml-64 p-6">Loading...</p>;
 
-  const formatDate = (date) => (date ? new Date(date).toLocaleString() : "");
   const pieData = [
     { name: "Expenses", value: summary.totalExpenses },
-    { name: "Incomes", value: summary.totalIncome }
+    { name: "Incomes", value: summary.totalIncome },
   ];
   const COLORS = ["#f87171", "#34d399"];
 
@@ -160,7 +193,11 @@ export default function Dashboard() {
       <Navbar />
       <div className="ml-64 flex-1 p-6">
         {popup.message && (
-          <div className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white ${popup.type === "success" ? "bg-green-500" : "bg-red-500"}`}>
+          <div
+            className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white ${
+              popup.type === "success" ? "bg-green-500" : "bg-red-500"
+            }`}
+          >
             {popup.message}
           </div>
         )}
@@ -174,6 +211,7 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* ---- Add Expense ---- */}
           <div className="bg-white shadow rounded p-4">
             <h2 className="font-semibold mb-4">Add Expense</h2>
             <input
@@ -190,17 +228,65 @@ export default function Dashboard() {
               value={newExpense.description}
               onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
             />
-            <input
-              type="date"
+
+            {/* Choix type */}
+            <select
               className="border p-2 w-full mb-2"
-              value={newExpense.date}
-              onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
-            />
-            <button className="bg-red-500 text-white px-4 py-2 rounded" onClick={handleAddExpense}>
+              value={newExpense.type}
+              onChange={(e) =>
+                setNewExpense({
+                  ...newExpense,
+                  type: e.target.value,
+                  date: "",
+                  startDate: "",
+                  endDate: "",
+                })
+              }
+            >
+              <option value="one-time">One-time</option>
+              <option value="recurring">Recurring</option>
+            </select>
+
+            {/* Si one-time -> date unique */}
+            {newExpense.type === "one-time" && (
+              <input
+                type="date"
+                className="border p-2 w-full mb-2"
+                value={newExpense.date}
+                onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
+              />
+            )}
+
+            {/* Si recurring -> start + end */}
+            {newExpense.type === "recurring" && (
+              <>
+                <label className="block text-sm mb-1">Start Date (required)</label>
+                <input
+                  type="date"
+                  className="border p-2 w-full mb-2"
+                  value={newExpense.startDate}
+                  onChange={(e) => setNewExpense({ ...newExpense, startDate: e.target.value })}
+                />
+
+                <label className="block text-sm mb-1">End Date (optional)</label>
+                <input
+                  type="date"
+                  className="border p-2 w-full mb-2"
+                  value={newExpense.endDate}
+                  onChange={(e) => setNewExpense({ ...newExpense, endDate: e.target.value })}
+                />
+              </>
+            )}
+
+            <button
+              className="bg-red-500 text-white px-4 py-2 rounded"
+              onClick={handleAddExpense}
+            >
               Add Expense
             </button>
           </div>
 
+          {/* ---- Add Income ---- */}
           <div className="bg-white shadow rounded p-4">
             <h2 className="font-semibold mb-4">Add Income</h2>
             <input
@@ -223,12 +309,16 @@ export default function Dashboard() {
               value={newIncome.date}
               onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })}
             />
-            <button className="bg-green-500 text-white px-4 py-2 rounded" onClick={handleAddIncome}>
+            <button
+              className="bg-green-500 text-white px-4 py-2 rounded"
+              onClick={handleAddIncome}
+            >
               Add Income
             </button>
           </div>
         </div>
 
+        {/* ---- Graphique ---- */}
         <div className="bg-white shadow rounded p-6 mt-6">
           <h2 className="font-semibold mb-4">Overview</h2>
           <ResponsiveContainer width="100%" height={300}>
