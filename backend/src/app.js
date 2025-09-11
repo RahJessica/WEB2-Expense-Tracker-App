@@ -25,7 +25,7 @@ app.use('/categories', categoryRoutes);
 app.use('/auth', authRoutes);
 app.use('/incomes', incomeRoutes);
 app.use('/expense', expenseRoutes);
-app.use('/receipt', receiptRoutes);
+app.use('/receipts', receiptRoutes);
 app.use('/users', userRoutes);
 
 async function startServer() {
