@@ -79,7 +79,7 @@ const ExpenseList = ({ token }) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    setUploading(prev => ({ ...prev, [expenseId]: true }));
+    //setUploading(prev => ({ ...prev, [expenseId]: true }));
 
     const formData = new FormData();
     formData.append('file', file);
@@ -96,13 +96,13 @@ const ExpenseList = ({ token }) => {
 
       const data = await res.json();
       setReceipts(prev => [data, ...prev]);
-      showPopup('Receipt uploaded successfully!', "success");
+     // showPopup('Receipt uploaded successfully!', "success");
     } catch (err) {
-      console.error('Error uploading receipt:', err?.message);
-      showPopup(err.message, "error");
-    } finally {
-      setUploading(prev => ({ ...prev, [expenseId]: false }));
-    }
+      console.error('Error uploading receipt:', err.message);  // mettre ? apres err
+     // showPopup(err.message, "error");
+    } //finally {
+     // setUploading(prev => ({ ...prev, [expenseId]: false }));
+    //}
   };
 
   const handleAddExpense = async () => {
