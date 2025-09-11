@@ -80,23 +80,39 @@ const ExpenseList = ({ token }) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    const token = localStorage.getItem("token");
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('expenseId', expenseId);
 
     try {
+      // Activer le loading pour cet expenseId
+      setUploading(prev => ({ ...prev, [expenseId]: true }));
+
       const res = await fetch('http://localhost:8080/receipts/new', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
         body: formData
       });
 
-      if (!res.ok) throw new Error('Failed to upload receipt');
+      if (!res.ok) {
+        const errMsg = await res.text();
+        throw new Error(errMsg || 'Failed to upload receipt');
+      }
 
       const data = await res.json();
       setReceipts(prev => [data, ...prev]);
+
+      showPopup('Receipt uploaded successfully!', 'success');
     } catch (err) {
       console.error('Error uploading receipt:', err?.message);
+      showPopup(err?.message || 'Failed to upload receipt', 'error');
+    } finally {
+      // Désactiver le loading
+      setUploading(prev => ({ ...prev, [expenseId]: false }));
     }
   };
 
@@ -241,8 +257,18 @@ const ExpenseList = ({ token }) => {
                     <td className="py-4 px-6 text-gray-700">{exp.amount}</td>
                     <td className="py-4 px-6 text-gray-700">{formatDateTime(exp.date || exp.startDate)}</td>
                     <td className="py-4 px-6">
-                      <label className="cursor-pointer bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded-lg text-sm transition-colors duration-200">
-                        {uploading[exp.id] ? 'Uploading...' : 'Upload'}
+                      <label className="cursor-pointer bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded-lg text-sm transition-colors duration-200 flex items-center justify-center space-x-2">
+                        {uploading[exp.id] ? (
+                          <>
+                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                            </svg>
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          'Upload'
+                        )}
                         <input
                           type="file"
                           accept=".jpg,.jpeg,.png,.pdf"
@@ -251,21 +277,24 @@ const ExpenseList = ({ token }) => {
                           className="hidden"
                         />
                       </label>
-                      {receipts
-                        .filter((r) => r.expenseId === exp.id)
-                        .map((r) => (
-                          <div key={r.id} className="mt-2">
-                            <a
-                              href={`http://localhost:8080/uploads/${r.fileURL}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-indigo-600 hover:text-indigo-800 text-sm"
-                            >
-                              View Receipt
-                            </a>
-                          </div>
-                        ))}
+
+                      {/* Afficher un seul lien pour visualiser les reçus */}
+                      {receipts.filter(r => r.expenseId === exp.id).length > 0 && (
+                        <div className="mt-2">
+                          <a
+                            href="#"
+                            onClick={() => {
+                              const urls = receipts.filter(r => r.expenseId === exp.id).map(r => `http://localhost:8080/uploads/${r.fileURL}`);
+                              urls.forEach(url => window.open(url, "_blank"));
+                            }}
+                            className="text-indigo-600 hover:text-indigo-800 text-sm"
+                          >
+                            View Receipt
+                          </a>
+                        </div>
+                      )}
                     </td>
+
                     <td className="py-4 px-6 space-x-3">
                       <button
                         className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm transition-colors duration-200"
