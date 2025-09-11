@@ -16,6 +16,7 @@ const ExpenseList = ({ token }) => {
   const [editingExpense, setEditingExpense] = useState(null);
   const [popup, setPopup] = useState({ message: "", type: "" });
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null); // State for delete confirmation
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -177,9 +178,11 @@ const ExpenseList = ({ token }) => {
     }
   };
 
-  const handleDeleteExpense = async (id) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette dépense ?")) return;
+  const handleDeleteExpense = (id) => {
+    setShowDeleteConfirm(id); // Show confirmation modal with expense ID
+  };
 
+  const confirmDelete = async (id) => {
     try {
       await api.delete(`/expense/delete/${id}`, { headers });
       setExpenses((prev) => prev.filter((exp) => exp.id !== id));
@@ -187,6 +190,8 @@ const ExpenseList = ({ token }) => {
     } catch (err) {
       console.error("DELETE /expense/delete/:id ->", err?.response?.data || err.message);
       showPopup(err.response?.data?.error || "Erreur lors de la suppression", "error");
+    } finally {
+      setShowDeleteConfirm(null); // Close modal
     }
   };
 
@@ -214,7 +219,7 @@ const ExpenseList = ({ token }) => {
           </button>
         </div>
 
-        <div className={`transition duration-300 ${showAddForm || editingExpense ? 'blur-sm pointer-events-none select-none' : ''}`}>
+        <div className={`transition duration-300 ${showAddForm || editingExpense || showDeleteConfirm ? 'blur-sm pointer-events-none select-none' : ''}`}>
           <div className="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden w-full">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-indigo-600 text-white">
@@ -433,6 +438,29 @@ const ExpenseList = ({ token }) => {
                   onClick={handleUpdateExpense}
                 >
                   Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md transform transition-all duration-300 scale-100">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">Confirmer la suppression</h2>
+              <p className="text-gray-600 mb-6">Êtes-vous sûr de vouloir supprimer cette dépense ?</p>
+              <div className="flex justify-end space-x-3">
+                <button
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg transition-colors duration-200"
+                  onClick={() => setShowDeleteConfirm(null)}
+                >
+                  Annuler
+                </button>
+                <button
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg transition-colors duration-200"
+                  onClick={() => confirmDelete(showDeleteConfirm)}
+                >
+                  Supprimer
                 </button>
               </div>
             </div>
