@@ -22,7 +22,7 @@ const userRoutes = require('./routes/user.js');
 
 //modif
 const path = require('path');
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static('uploads'));
 // fin
 
 app.use('/dashboard', dashboardRoutes);
