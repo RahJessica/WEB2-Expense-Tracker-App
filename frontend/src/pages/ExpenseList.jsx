@@ -252,7 +252,7 @@ const ExpenseList = ({ token }) => {
                     .map((r) => (
                       <div key={r.id}>
                         <a
-                          href={`http://localhost:8080/receipts/download/${r.id}`}   // href={`http://localhost:8080/${r.fileURL}`}
+                          href={`http://localhost:8080/uploads/${r.fileURL}`}   // href={`http://localhost:8080/${r.fileURL}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-indigo-600 hover:text-indigo-800 underline text-sm"
