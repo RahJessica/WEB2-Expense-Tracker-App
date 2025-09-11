@@ -147,66 +147,55 @@ const ExpenseList = ({ token }) => {
     }
   };
 
-  const openEditModal = (expense) => {
-    setEditingExpense({
-       ...expense,
-       date: expense.date || "",
-       startDate: expense.startDate || "",
-       endDate: expense.endDate || ""
-    });
-  };
-
   const handleUpdateExpense = async () => {
-  if (!editingExpense) return;
+    if (!editingExpense) return;
 
-  const error = validateExpense(editingExpense);
-  if (error) {
-    showPopup(error, "error");
-    return;
-  }
+    const error = validateExpense(editingExpense);
+    if (error) {
+      showPopup(error, "error");
+      return;
+    }
 
-  const payload =
-    editingExpense.type === "one-time"
-      ? {
-          amount: Number(editingExpense.amount),
-          description: editingExpense.description,
-          type: "one-time",
-          date: editingExpense.date,
-        }
-      : {
-          amount: Number(editingExpense.amount),
-          description: editingExpense.description,
-          type: "recurring",
-          startDate: editingExpense.startDate,
-          endDate: editingExpense.endDate || null,
-        };
+    const payload =
+      editingExpense.type === "one-time"
+        ? {
+            amount: Number(editingExpense.amount),
+            description: editingExpense.description,
+            type: "one-time",
+            date: editingExpense.date || new Date().toISOString().split("T")[0],
+          }
+        : {
+            amount: Number(editingExpense.amount),
+            description: editingExpense.description,
+            type: "recurring",
+            startDate: editingExpense.startDate,
+            endDate: editingExpense.endDate || null,
+          };
 
-  try {
-    await api.put(`/expense/${editingExpense.id}`, payload, { headers });
-    fetchExpenses();
-    setEditingExpense(null); // ferme la modale
-    showPopup("Expense updated successfully!", "success");
-  } catch (err) {
-    console.error("PUT /expense/:id ->", err?.response?.data || err.message);
-    showPopup(err.response?.data?.error || "Failed to update expense", "error");
-  }
-};
-
-
-  const handleDeleteExpense = async (id) => {
-  const confirmDelete = window.confirm("Are you sure you want to delete this expense?");
-  if (!confirmDelete) return;
-
-  try {
-    await api.delete(`/expense/${id}`, { headers });
-      setExpenses(prev => prev.filter(exp => exp.id !== id));
-      showPopup("Expense deleted successfully!", "success");
+    try {
+      await api.put(`/expense/edit/${editingExpense.id}`, payload, { headers });
+      setEditingExpense(null);
+      fetchExpenses();
+      showPopup("Dépense mise à jour avec succès ", "success");
     } catch (err) {
-      console.error("DELETE /expense/:id ->", err?.response?.data || err.message);
-      showPopup(err.response?.data?.error || "Failed to delete expense", "error");
+      console.error("PUT /expense/edit/:id ->", err?.response?.data || err.message);
+      showPopup(err.response?.data?.error || "Erreur lors de la mise à jour ", "error");
     }
   };
+  
 
+  const handleDeleteExpense = async (id) => {
+  if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette dépense ?")) return;
+
+  try {
+    await api.delete(`/expense/delete/${id}`, { headers });
+    setExpenses((prev) => prev.filter((exp) => exp.id !== id));
+    showPopup("Dépense supprimée avec succès ", "success");
+  } catch (err) {
+    console.error("DELETE /expense/delete/:id ->", err?.response?.data || err.message);
+    showPopup(err.response?.data?.error || "Erreur lors de la suppression ", "error");
+  }
+};
   return (
     <div className="p-6 ml-64 bg-gray-100 min-h-screen relative">
       {popup.message && (
@@ -276,7 +265,7 @@ const ExpenseList = ({ token }) => {
                 <td className="py-3 px-6 space-x-2">
                   <button
                     className="bg-blue-500 text-white py-1 px-3 rounded-md text-sm"
-                    onClick={() => openEditModal(exp)}
+                    onClick={() => handleUpdateExpense(exp)}
                   >
                     Edit
                   </button>
