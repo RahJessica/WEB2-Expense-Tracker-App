@@ -20,6 +20,11 @@ const categoryRoutes = require('./routes/categories.js');
 const receiptRoutes = require('./routes/receipts.js');
 const userRoutes = require('./routes/user.js');
 
+//modif
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// fin
+
 app.use('/dashboard', dashboardRoutes);
 app.use('/categories', categoryRoutes);
 app.use('/auth', authRoutes);
