@@ -265,7 +265,7 @@ const ExpenseList = ({ token }) => {
                 <td className="py-3 px-6 space-x-2">
                   <button
                     className="bg-blue-500 text-white py-1 px-3 rounded-md text-sm"
-                    onClick={() => handleUpdateExpense(exp)}
+                    onClick={() => setEditingExpense(exp)}
                   >
                     Edit
                   </button>
