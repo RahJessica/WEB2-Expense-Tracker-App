@@ -1,4 +1,3 @@
-// ExpenseList.js
 import React, { useEffect, useState } from 'react';
 import api from "../services/api";
 
@@ -16,7 +15,7 @@ const ExpenseList = ({ token }) => {
   });
   const [editingExpense, setEditingExpense] = useState(null);
   const [popup, setPopup] = useState({ message: "", type: "" });
-  const [showAddForm, setShowAddForm] = useState(false); // 👈 Bouton + Form
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -55,6 +54,7 @@ const ExpenseList = ({ token }) => {
     fetchExpenses();
     fetchReceipts();
   }, []);
+
   const fetchExpenses = async () => {
     try {
       const res = await api.get('/expense/expenses', { headers });
@@ -79,8 +79,6 @@ const ExpenseList = ({ token }) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    //setUploading(prev => ({ ...prev, [expenseId]: true }));
-
     const formData = new FormData();
     formData.append('file', file);
     formData.append('expenseId', expenseId);
@@ -96,13 +94,9 @@ const ExpenseList = ({ token }) => {
 
       const data = await res.json();
       setReceipts(prev => [data, ...prev]);
-     // showPopup('Receipt uploaded successfully!', "success");
     } catch (err) {
-      console.error('Error uploading receipt:', err.message);  // mettre ? apres err
-     // showPopup(err.message, "error");
-    } //finally {
-     // setUploading(prev => ({ ...prev, [expenseId]: false }));
-    //}
+      console.error('Error uploading receipt:', err?.message);
+    }
   };
 
   const handleAddExpense = async () => {
@@ -139,7 +133,7 @@ const ExpenseList = ({ token }) => {
         endDate: "",
       });
       fetchExpenses();
-      setShowAddForm(false); // 👈 Cache le formulaire après ajout
+      setShowAddForm(false);
       showPopup("Expense added successfully!", "success");
     } catch (err) {
       console.error("POST /expense/new ->", err?.response?.data || err.message);
@@ -176,262 +170,275 @@ const ExpenseList = ({ token }) => {
       await api.put(`/expense/edit/${editingExpense.id}`, payload, { headers });
       setEditingExpense(null);
       fetchExpenses();
-      showPopup("Dépense mise à jour avec succès ", "success");
+      showPopup("Dépense mise à jour avec succès", "success");
     } catch (err) {
       console.error("PUT /expense/edit/:id ->", err?.response?.data || err.message);
-      showPopup(err.response?.data?.error || "Erreur lors de la mise à jour ", "error");
+      showPopup(err.response?.data?.error || "Erreur lors de la mise à jour", "error");
     }
   };
-  
 
   const handleDeleteExpense = async (id) => {
-  if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette dépense ?")) return;
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette dépense ?")) return;
 
-  try {
-    await api.delete(`/expense/delete/${id}`, { headers });
-    setExpenses((prev) => prev.filter((exp) => exp.id !== id));
-    showPopup("Dépense supprimée avec succès ", "success");
-  } catch (err) {
-    console.error("DELETE /expense/delete/:id ->", err?.response?.data || err.message);
-    showPopup(err.response?.data?.error || "Erreur lors de la suppression ", "error");
-  }
-};
+    try {
+      await api.delete(`/expense/delete/${id}`, { headers });
+      setExpenses((prev) => prev.filter((exp) => exp.id !== id));
+      showPopup("Dépense supprimée avec succès", "success");
+    } catch (err) {
+      console.error("DELETE /expense/delete/:id ->", err?.response?.data || err.message);
+      showPopup(err.response?.data?.error || "Erreur lors de la suppression", "error");
+    }
+  };
+
   return (
-    <div className="p-6 ml-64 bg-gray-100 min-h-screen relative">
-      {popup.message && (
-        <div className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white z-50 ${
-          popup.type === "success" ? "bg-green-500" : "bg-red-500"
-        }`}>
-          {popup.message}
+    <div className="flex min-h-screen bg-gray-50 w-full max-w-full">
+      <div className="ml-64 flex-1 p-8 w-full">
+        {popup.message && (
+          <div
+            className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-opacity duration-300 z-50 ${
+              popup.type === "success" ? "bg-emerald-500" : "bg-rose-500"
+            }`}
+          >
+            {popup.message}
+          </div>
+        )}
+
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Expense Management</h2>
+
+        <div className="mb-8 flex justify-center">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg shadow-md transition-colors duration-200"
+          >
+            + Add Expense
+          </button>
         </div>
-      )}
 
-      <h2 className="text-3xl font-bold mb-6 text-center text-indigo-600">Expense Management</h2>
-
-      {/* Bouton pour afficher le formulaire */}
-      <div className="mb-6 flex justify-center it">
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded shadow"
-        >
-          + Ajouter 
-        </button>
-      </div>
-
-      {/* Liste des dépenses floutée si le formulaire est affiché */}
-      <div className={`transition duration-300 ${showAddForm ? 'blur-sm pointer-events-none select-none' : ''}`}>
-        <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-          <thead className="bg-indigo-500 text-white">
-            <tr>
-              <th className="py-3 px-6 text-left">Description</th>
-              <th className="py-3 px-6 text-left">Amount</th>
-              <th className="py-3 px-6 text-left">Date & Time</th>
-              <th className="py-3 px-6 text-left">Receipt</th>
-              <th className="py-3 px-6 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {expenses.map((exp) => (
-              <tr key={exp.id} className="border-b hover:bg-indigo-50 transition">
-                <td className="py-3 px-6">{exp.description}</td>
-                <td className="py-3 px-6">{exp.amount}</td>
-                <td className="py-3 px-6">{formatDateTime(exp.date || exp.startDate)}</td>
-                <td className="py-3 px-6">
-                  <label className="cursor-pointer bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded-md text-sm">
-                    {uploading[exp.id] ? 'Uploading...' : 'Upload'}
-                    <input
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.pdf"
-                      onChange={(e) => handleFileUpload(e, exp.id)}
-                      disabled={uploading[exp.id]}
-                      className="hidden"
-                    />
-                  </label>
-                  {receipts
-                    .filter((r) => r.expenseId === exp.id)
-                    .map((r) => (
-                      <div key={r.id}>
-                        <a
-                          href={`http://localhost:8080/uploads/${r.fileURL}`}   // href={`http://localhost:8080/${r.fileURL}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-800 underline text-sm"
-                        >
-                          View Receipt
-                        </a>
-                      </div>
-                    ))}
-                </td>
-                <td className="py-3 px-6 space-x-2">
-                  <button
-                    className="bg-blue-500 text-white py-1 px-3 rounded-md text-sm"
-                    onClick={() => setEditingExpense(exp)}
+        <div className={`transition duration-300 ${showAddForm || editingExpense ? 'blur-sm pointer-events-none select-none' : ''}`}>
+          <div className="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden w-full">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-indigo-600 text-white">
+                <tr>
+                  <th className="py-4 px-6 text-left text-sm font-medium">Description</th>
+                  <th className="py-4 px-6 text-left text-sm font-medium">Amount</th>
+                  <th className="py-4 px-6 text-left text-sm font-medium">Date & Time</th>
+                  <th className="py-4 px-6 text-left text-sm font-medium">Receipt</th>
+                  <th className="py-4 px-6 text-left text-sm font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {expenses.map((exp, index) => (
+                  <tr
+                    key={exp.id}
+                    className={`transition-colors ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-indigo-50`}
                   >
-                    Edit
-                  </button>
-                  <button
-                    className="bg-red-500 text-white py-1 px-3 rounded-md text-sm"
-                    onClick={() => handleDeleteExpense(exp.id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Formulaire en overlay */}
-      {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-40">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md animate-fade-in">
-            <h2 className="font-semibold mb-4 text-lg">Ajouter une dépense</h2>
-            <input
-              type="number"
-              placeholder="Amount"
-              className="border p-2 w-full mb-2"
-              value={newExpense.amount}
-              onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="Description"
-              className="border p-2 w-full mb-2"
-              value={newExpense.description}
-              onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
-            />
-            <select
-              className="border p-2 w-full mb-2"
-              value={newExpense.type}
-              onChange={(e) =>
-                setNewExpense({
-                  ...newExpense,
-                  type: e.target.value,
-                  date: "",
-                  startDate: "",
-                  endDate: "",
-                })
-              }
-            >
-              <option value="one-time">One-Time</option>
-              <option value="recurring">Recurring</option>
-            </select>
-            {newExpense.type === "one-time" && (
-              <input
-                type="date"
-                className="border p-2 w-full mb-2"
-                value={newExpense.date}
-                onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
-              />
-            )}
-            {newExpense.type === "recurring" && (
-              <>
-                <input
-                  type="date"
-                  placeholder="Start Date"
-                  className="border p-2 w-full mb-2"
-                  value={newExpense.startDate}
-                  onChange={(e) => setNewExpense({ ...newExpense, startDate: e.target.value })}
-                />
-                <input
-                  type="date"
-                  placeholder="End Date (optional)"
-                  className="border p-2 w-full mb-2"
-                  value={newExpense.endDate}
-                  onChange={(e) => setNewExpense({ ...newExpense, endDate: e.target.value })}
-                />
-              </>
-            )}
-            <div className="flex justify-end space-x-2">
-              <button
-                className="bg-gray-300 text-black px-4 py-2 rounded"
-                onClick={() => setShowAddForm(false)}
-              >
-                Annuler
-              </button>
-              <button
-                className="bg-indigo-600 text-white px-4 py-2 rounded"
-                onClick={handleAddExpense}
-              >
-                Ajouter
-              </button>
-            </div>
+                    <td className="py-4 px-6 text-gray-700">{exp.description}</td>
+                    <td className="py-4 px-6 text-gray-700">{exp.amount}</td>
+                    <td className="py-4 px-6 text-gray-700">{formatDateTime(exp.date || exp.startDate)}</td>
+                    <td className="py-4 px-6">
+                      <label className="cursor-pointer bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded-lg text-sm transition-colors duration-200">
+                        {uploading[exp.id] ? 'Uploading...' : 'Upload'}
+                        <input
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.pdf"
+                          onChange={(e) => handleFileUpload(e, exp.id)}
+                          disabled={uploading[exp.id]}
+                          className="hidden"
+                        />
+                      </label>
+                      {receipts
+                        .filter((r) => r.expenseId === exp.id)
+                        .map((r) => (
+                          <div key={r.id} className="mt-2">
+                            <a
+                              href={`http://localhost:8080/uploads/${r.fileURL}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-indigo-600 hover:text-indigo-800 text-sm"
+                            >
+                              View Receipt
+                            </a>
+                          </div>
+                        ))}
+                    </td>
+                    <td className="py-4 px-6 space-x-3">
+                      <button
+                        className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm transition-colors duration-200"
+                        onClick={() => setEditingExpense(exp)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm transition-colors duration-200"
+                        onClick={() => handleDeleteExpense(exp.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
 
-      {/* Modale de modification si besoin */}
-      {editingExpense && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h2 className="font-semibold mb-4">Modifier la dépense</h2>
-            <input
-              type="number"
-              className="border p-2 w-full mb-2"
-              value={editingExpense.amount}
-              onChange={(e) => setEditingExpense({ ...editingExpense, amount: e.target.value })}
-            />
-            <input
-              type="text"
-              className="border p-2 w-full mb-2"
-              value={editingExpense.description}
-              onChange={(e) => setEditingExpense({ ...editingExpense, description: e.target.value })}
-            />
-            <select
-              className="border p-2 w-full mb-2"
-              value={editingExpense.type}
-              onChange={(e) =>
-                setEditingExpense({
-                  ...editingExpense,
-                  type: e.target.value,
-                })
-              }
-            >
-              <option value="one-time">One-Time</option>
-              <option value="recurring">Recurring</option>
-            </select>
-            {editingExpense.type === "one-time" && (
+        {showAddForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg transform transition-all duration-300 scale-100">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">Add Expense</h2>
               <input
-                type="date"
-                className="border p-2 w-full mb-2"
-                value={editingExpense.date}
-                onChange={(e) => setEditingExpense({ ...editingExpense, date: e.target.value })}
+                type="number"
+                placeholder="Amount"
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                value={newExpense.amount}
+                onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
               />
-            )}
-            {editingExpense.type === "recurring" && (
-              <>
+              <input
+                type="text"
+                placeholder="Description"
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                value={newExpense.description}
+                onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+              />
+              <select
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                value={newExpense.type}
+                onChange={(e) =>
+                  setNewExpense({
+                    ...newExpense,
+                    type: e.target.value,
+                    date: "",
+                    startDate: "",
+                    endDate: "",
+                  })
+                }
+              >
+                <option value="one-time">One-Time</option>
+                <option value="recurring">Recurring</option>
+              </select>
+              {newExpense.type === "one-time" && (
                 <input
                   type="date"
-                  className="border p-2 w-full mb-2"
-                  value={editingExpense.startDate}
-                  onChange={(e) => setEditingExpense({ ...editingExpense, startDate: e.target.value })}
+                  className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                  value={newExpense.date}
+                  onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
                 />
-                <input
-                  type="date"
-                  className="border p-2 w-full mb-2"
-                  value={editingExpense.endDate}
-                  onChange={(e) => setEditingExpense({ ...editingExpense, endDate: e.target.value })}
-                />
-              </>
-            )}
-            <div className="flex justify-end space-x-2">
-              <button
-                className="bg-gray-300 text-black px-4 py-2 rounded"
-                onClick={() => setEditingExpense(null)}
-              >
-                Annuler
-              </button>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-                onClick={handleUpdateExpense}
-              >
-                Enregistrer
-              </button>
+              )}
+              {newExpense.type === "recurring" && (
+                <>
+                  <input
+                    type="date"
+                    placeholder="Start Date"
+                    className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    value={newExpense.startDate}
+                    onChange={(e) => setNewExpense({ ...newExpense, startDate: e.target.value })}
+                  />
+                  <input
+                    type="date"
+                    placeholder="End Date (optional)"
+                    className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    value={newExpense.endDate}
+                    onChange={(e) => setNewExpense({ ...newExpense, endDate: e.target.value })}
+                  />
+                </>
+              )}
+              <div className="flex justify-end space-x-3">
+                <button
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg transition-colors duration-200"
+                  onClick={() => setShowAddForm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-colors duration-200"
+                  onClick={handleAddExpense}
+                >
+                  Add
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {editingExpense && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg transform transition-all duration-300 scale-100">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">Edit Expense</h2>
+              <input
+                type="number"
+                placeholder="Amount"
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                value={editingExpense.amount || ""}
+                onChange={(e) => setEditingExpense({ ...editingExpense, amount: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Description"
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                value={editingExpense.description || ""}
+                onChange={(e) => setEditingExpense({ ...editingExpense, description: e.target.value })}
+              />
+              <select
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                value={editingExpense.type || "one-time"}
+                onChange={(e) =>
+                  setEditingExpense({
+                    ...editingExpense,
+                    type: e.target.value,
+                    date: e.target.value === "one-time" ? editingExpense.date || "" : "",
+                    startDate: e.target.value === "recurring" ? editingExpense.startDate || "" : "",
+                    endDate: e.target.value === "recurring" ? editingExpense.endDate || "" : "",
+                  })
+                }
+              >
+                <option value="one-time">One-Time</option>
+                <option value="recurring">Recurring</option>
+              </select>
+              {editingExpense.type === "one-time" && (
+                <input
+                  type="date"
+                  placeholder="Date"
+                  className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  value={editingExpense.date || ""}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, date: e.target.value })}
+                />
+              )}
+              {editingExpense.type === "recurring" && (
+                <>
+                  <input
+                    type="date"
+                    placeholder="Start Date"
+                    className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                    value={editingExpense.startDate || ""}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, startDate: e.target.value })}
+                  />
+                  <input
+                    type="date"
+                    placeholder="End Date (optional)"
+                    className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                    value={editingExpense.endDate || ""}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, endDate: e.target.value })}
+                  />
+                </>
+              )}
+              <div className="flex justify-end space-x-3">
+                <button
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg transition-colors duration-200"
+                  onClick={() => setEditingExpense(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors duration-200"
+                  onClick={handleUpdateExpense}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
