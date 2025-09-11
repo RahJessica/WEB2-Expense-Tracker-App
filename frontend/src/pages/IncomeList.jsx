@@ -6,21 +6,21 @@ const IncomeList = ({ token }) => {
   const [newIncome, setNewIncome] = useState({ amount: "", description: "", date: "" });
   const [editingIncome, setEditingIncome] = useState(null);
   const [popup, setPopup] = useState({ message: "", type: "" });
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const headers = { Authorization: `Bearer ${token}` };
 
-  // Format date and time 
   const formatDateTime = (date) => {
     if (!date) return "";
     const d = new Date(date);
-    if (isNaN(d.getTime())) return ""; 
+    if (isNaN(d.getTime())) return "";
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const day = String(d.getDate()).padStart(2, "0");
     const year = d.getFullYear();
     let hours = d.getHours();
     const minutes = String(d.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12; // Convert to 12-hour format
+    hours = hours % 12 || 12;
     return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
   };
 
@@ -47,7 +47,6 @@ const IncomeList = ({ token }) => {
     }
   };
 
-  // --- Incomes CRUD ---
   const handleAddIncome = async () => {
     if (!newIncome.amount || Number(newIncome.amount) <= 0) {
       showPopup("Amount is required and must be greater than 0", "error");
@@ -70,6 +69,7 @@ const IncomeList = ({ token }) => {
       );
       setNewIncome({ amount: "", description: "", date: "" });
       fetchIncomes();
+      setShowAddForm(false);
       showPopup("Income added successfully!", "success");
     } catch (err) {
       console.error("POST /incomes/new ->", err?.response?.data || err.message);
@@ -115,131 +115,154 @@ const IncomeList = ({ token }) => {
   };
 
   return (
-    <div className="p-6 ml-64 bg-gray-100 min-h-screen">
-      {popup.message && (
-        <div
-          className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white ${
-            popup.type === "success" ? "bg-green-500" : "bg-red-500"
-          }`}
-        >
-          {popup.message}
-        </div>
-      )}
-
-      <h2 className="text-3xl font-bold mb-6 text-center text-indigo-600">Income Management</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* ---- Add Income ---- */}
-        <div className="bg-white shadow rounded p-4">
-          <h2 className="font-semibold mb-4">Add Income</h2>
-          <input
-            type="number"
-            placeholder="Amount"
-            className="border p-2 w-full mb-2"
-            value={newIncome.amount}
-            onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })}
-          />
-          <input
-            type="text"
-            placeholder="Description"
-            className="border p-2 w-full mb-2"
-            value={newIncome.description}
-            onChange={(e) => setNewIncome({ ...newIncome, description: e.target.value })}
-          />
-          <input
-            type="date"
-            className="border p-2 w-full mb-2"
-            value={newIncome.date}
-            onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })}
-          />
-          <button
-            className="bg-green-500 text-white px-4 py-2 rounded"
-            onClick={handleAddIncome}
+    <div className="flex min-h-screen bg-gray-50 w-full max-w-full">
+      <div className="ml-64 flex-1 p-8 w-full">
+        {popup.message && (
+          <div
+            className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-opacity duration-300 z-50 ${
+              popup.type === "success" ? "bg-emerald-500" : "bg-rose-500"
+            }`}
           >
-            Add Income
+            {popup.message}
+          </div>
+        )}
+
+        <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Income Management</h2>
+
+        <div className="mb-8 flex justify-center">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg shadow-md transition-colors duration-200"
+          >
+            + Add Income
           </button>
         </div>
-      </div>
 
-      {/* ---- Income List ---- */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-          <thead className="bg-indigo-500 text-white">
-            <tr>
-              <th className="py-3 px-6 text-left">Description</th>
-              <th className="py-3 px-6 text-left">Amount</th>
-              <th className="py-3 px-6 text-left">Date & Time</th>
-              <th className="py-3 px-6 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {incomes.map(inc => (
-              <tr key={inc.id} className="border-b hover:bg-indigo-50 transition">
-                <td className="py-3 px-6">{inc.description}</td>
-                <td className="py-3 px-6">{inc.amount}</td>
-                <td className="py-3 px-6">{formatDateTime(inc.date)}</td>
-                <td className="py-3 px-6 space-x-2">
-                  <button
-                    className="bg-blue-500 text-white py-1 px-3 rounded-md text-sm"
-                    onClick={() => setEditingIncome(inc)}
+        <div className={`transition duration-300 ${showAddForm || editingIncome ? 'blur-sm pointer-events-none select-none' : ''}`}>
+          <div className="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden w-full">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-indigo-600 text-white">
+                <tr>
+                  <th className="py-4 px-6 text-left text-sm font-medium">Description</th>
+                  <th className="py-4 px-6 text-left text-sm font-medium">Amount</th>
+                  <th className="py-4 px-6 text-left text-sm font-medium">Date & Time</th>
+                  <th className="py-4 px-6 text-left text-sm font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {incomes.map((inc, index) => (
+                  <tr
+                    key={inc.id}
+                    className={`transition-colors ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-indigo-50`}
                   >
-                    Edit
-                  </button>
-                  <button
-                    className="bg-red-500 text-white py-1 px-3 rounded-md text-sm"
-                    onClick={() => handleDeleteIncome(inc.id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ---- Edit Income Modal ---- */}
-      {editingIncome && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h2 className="font-semibold mb-4">Edit Income</h2>
-            <input
-              type="number"
-              placeholder="Amount"
-              className="border p-2 w-full mb-2"
-              value={editingIncome.amount}
-              onChange={(e) => setEditingIncome({ ...editingIncome, amount: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="Description"
-              className="border p-2 w-full mb-2"
-              value={editingIncome.description}
-              onChange={(e) => setEditingIncome({ ...editingIncome, description: e.target.value })}
-            />
-            <input
-              type="date"
-              className="border p-2 w-full mb-2"
-              value={editingIncome.date}
-              onChange={(e) => setEditingIncome({ ...editingIncome, date: e.target.value })}
-            />
-            <div className="flex justify-end space-x-2">
-              <button
-                className="bg-gray-300 text-black px-4 py-2 rounded"
-                onClick={() => setEditingIncome(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-                onClick={handleUpdateIncome}
-              >
-                Save
-              </button>
-            </div>
+                    <td className="py-4 px-6 text-gray-700">{inc.description}</td>
+                    <td className="py-4 px-6 text-gray-700">{inc.amount}</td>
+                    <td className="py-4 px-6 text-gray-700">{formatDateTime(inc.date)}</td>
+                    <td className="py-4 px-6 space-x-3">
+                      <button
+                        className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm transition-colors duration-200"
+                        onClick={() => setEditingIncome(inc)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm transition-colors duration-200"
+                        onClick={() => handleDeleteIncome(inc.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+
+        {showAddForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg transform transition-all duration-300 scale-100">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">Add Income</h2>
+              <input
+                type="number"
+                placeholder="Amount"
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                value={newIncome.amount}
+                onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Description"
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                value={newIncome.description}
+                onChange={(e) => setNewIncome({ ...newIncome, description: e.target.value })}
+              />
+              <input
+                type="date"
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                value={newIncome.date}
+                onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })}
+              />
+              <div className="flex justify-end space-x-3">
+                <button
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg transition-colors duration-200"
+                  onClick={() => setShowAddForm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-colors duration-200"
+                  onClick={handleAddIncome}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {editingIncome && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg transform transition-all duration-300 scale-100">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">Edit Income</h2>
+              <input
+                type="number"
+                placeholder="Amount"
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                value={editingIncome.amount}
+                onChange={(e) => setEditingIncome({ ...editingIncome, amount: e.target.value })}
+              />
+              <input
+                type="text"
+                placeholder="Description"
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                value={editingIncome.description}
+                onChange={(e) => setEditingIncome({ ...editingIncome, description: e.target.value })}
+              />
+              <input
+                type="date"
+                className="border border-gray-300 p-3 w-full rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                value={editingIncome.date}
+                onChange={(e) => setEditingIncome({ ...editingIncome, date: e.target.value })}
+              />
+              <div className="flex justify-end space-x-3">
+                <button
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg transition-colors duration-200"
+                  onClick={() => setEditingIncome(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors duration-200"
+                  onClick={handleUpdateIncome}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
