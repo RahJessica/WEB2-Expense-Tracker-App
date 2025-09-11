@@ -1,17 +1,9 @@
 const express = require('express');
 const router = express.Router();
-
- //modif
  const path = require('path');
 const multer = require('multer');
- // fin modif
-
 const { createReceipt, getReceipts, deleteReceipt, downloadReceipt } = require('../controllers/receiptsController.js');
 const { authenticate } = require('../middlewares/authentification.js');
-
-// supprimer
-
-// fin suppression
 
 // changement
 const storage = multer.diskStorage({
@@ -24,7 +16,6 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
-// fin changement
 
 
 router.use(authenticate);

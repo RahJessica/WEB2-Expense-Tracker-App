@@ -1,8 +1,8 @@
 const { Receipt } = require('../models/index.js');
 
-// ajout
+
 const path = require('path');
- // fin
+ 
 
 exports.createReceipt = async (req, res) => {
   try {
@@ -50,9 +50,6 @@ exports.deleteReceipt = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
-
-
 
 // download
 exports.downloadReceipt = async (req, res) => {
