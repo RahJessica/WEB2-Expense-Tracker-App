@@ -52,7 +52,7 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return <p className="ml-64 p-6">Loading...</p>;
+  if (loading) return <p className="ml-64 p-6 text-gray-500 text-lg">Loading...</p>;
 
   const pieData = [
     { name: "Expenses", value: summary.totalExpenses },
@@ -61,38 +61,54 @@ export default function Dashboard() {
   const COLORS = ["#f87171", "#34d399"];
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen bg-gray-50 w-full">
       <Navbar />
-      <div className="ml-64 flex-1 p-6">
+      <div className="ml-64 flex-1 p-8 w-full max-w-full">
         {popup.message && (
           <div
-            className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white ${
-              popup.type === "success" ? "bg-green-500" : "bg-red-500"
+            className={`fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-opacity duration-300 ${
+              popup.type === "success" ? "bg-green-600" : "bg-red-600"
             }`}
           >
             {popup.message}
           </div>
         )}
 
-        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-8">Dashboard</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-green-100 p-4 rounded shadow">Total Income: {summary.totalIncome} Ar</div>
-          <div className="bg-red-100 p-4 rounded shadow">Total Expenses: {summary.totalExpenses} Ar</div>
-          <div className="bg-blue-100 p-4 rounded shadow">Balance: {summary.balance} Ar</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 w-full">
+          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100">
+            <h3 className="text-sm font-medium text-gray-500">Total Income</h3>
+            <p className="text-2xl font-semibold text-green-600 mt-2">{summary.totalIncome} Ar</p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100">
+            <h3 className="text-sm font-medium text-gray-500">Total Expenses</h3>
+            <p className="text-2xl font-semibold text-red-600 mt-2">{summary.totalExpenses} Ar</p>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100">
+            <h3 className="text-sm font-medium text-gray-500">Balance</h3>
+            <p className="text-2xl font-semibold text-blue-600 mt-2">{summary.balance} Ar</p>
+          </div>
         </div>
 
-        <div className="bg-white shadow rounded p-6 mt-6">
-          <h2 className="font-semibold mb-4">Overview</h2>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-white shadow-sm rounded-xl p-8 border border-gray-100 w-full">
+          <h2 className="text-xl font-semibold text-gray-700 mb-6">Overview</h2>
+          <ResponsiveContainer width="100%" height={350}>
             <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label>
+              <Pie data={pieData} cx="50%" cy="50%" outerRadius={120} dataKey="value" label>
                 {pieData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
-              <Legend />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                  padding: "8px",
+                }}
+              />
+              <Legend wrapperStyle={{ paddingTop: "20px" }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
